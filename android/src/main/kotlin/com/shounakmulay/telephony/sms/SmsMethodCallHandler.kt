@@ -12,10 +12,17 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.shounakmulay.telephony.PermissionsController
 import com.shounakmulay.telephony.utils.ActionType
+import com.shounakmulay.telephony.dialer.DialerController
+import com.shounakmulay.telephony.dialer.PhoneAccountController
 import com.shounakmulay.telephony.utils.Constants
 import com.shounakmulay.telephony.utils.Constants.ADDRESS
 import com.shounakmulay.telephony.utils.Constants.BACKGROUND_HANDLE
 import com.shounakmulay.telephony.utils.Constants.CALL_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.DIALER_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.PHONE_ACCOUNT_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.ACCOUNT_ID
+import com.shounakmulay.telephony.utils.Constants.ACCOUNT_LABEL
+import com.shounakmulay.telephony.utils.Constants.ACCOUNT_CAPABILITIES
 import com.shounakmulay.telephony.utils.Constants.DEFAULT_CONVERSATION_PROJECTION
 import com.shounakmulay.telephony.utils.Constants.DEFAULT_SMS_PROJECTION
 import com.shounakmulay.telephony.utils.Constants.FAILED_FETCH
@@ -51,7 +58,9 @@ import io.flutter.plugin.common.PluginRegistry
 class SmsMethodCallHandler(
     private val context: Context,
     private val smsController: SmsController,
-    private val permissionsController: PermissionsController
+    private val permissionsController: PermissionsController,
+    private val dialerController: DialerController,
+    private val phoneAccountController: PhoneAccountController
 ) : PluginRegistry.RequestPermissionsResultListener,
     MethodChannel.MethodCallHandler,
     BroadcastReceiver() {
@@ -77,6 +86,10 @@ class SmsMethodCallHandler(
   private lateinit var phoneNumber: String
 
   private var requestCode: Int = -1
+
+  private lateinit var accountId: String
+  private lateinit var accountLabel: String
+  private var accountCapabilities: Int = -1
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     this.result = result
@@ -146,6 +159,21 @@ class SmsMethodCallHandler(
           handleMethod(action, CALL_REQUEST_CODE)
         }
       }
+      ActionType.DIALER -> handleMethod(action, DIALER_REQUEST_CODE)
+      ActionType.PHONE_ACCOUNT -> {
+        if (call.hasArgument(ACCOUNT_ID)) {
+          val accountId = call.argument<String>(ACCOUNT_ID)
+          val accountLabel = call.argument<String>(ACCOUNT_LABEL) ?: ""
+          val accountCapabilities = call.argument<Int>(ACCOUNT_CAPABILITIES) ?: 0
+
+          if (!accountId.isNullOrBlank()) {
+            this.accountId = accountId
+            this.accountLabel = accountLabel
+            this.accountCapabilities = accountCapabilities
+          }
+        }
+        handleMethod(action, PHONE_ACCOUNT_REQUEST_CODE)
+      }
     }
   }
 
@@ -169,6 +197,8 @@ class SmsMethodCallHandler(
         ActionType.GET -> handleGetActions(smsAction)
         ActionType.PERMISSION -> result.success(true)
         ActionType.CALL -> handleCallActions(smsAction)
+        ActionType.DIALER -> handleDialerActions(smsAction)
+        ActionType.PHONE_ACCOUNT -> handlePhoneAccountActions(smsAction)
       }
     } catch (e: IllegalArgumentException) {
       result.error(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
@@ -347,6 +377,54 @@ class SmsMethodCallHandler(
 
   fun setActivity(activity: Activity) {
     this.activity = activity
+  }
+
+  private fun handleDialerActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.REQUEST_DEFAULT_DIALER -> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val success = dialerController.requestDefaultDialerRole(activity)
+          result.success(success)
+        } else {
+          result.error("NOT_SUPPORTED", "Requires Android API 29+", null)
+        }
+      }
+      SmsAction.IS_DEFAULT_DIALER -> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          val isDefault = dialerController.isDefaultDialer()
+          result.success(isDefault)
+        } else {
+          result.error("NOT_SUPPORTED", "Requires Android API 29+", null)
+        }
+      }
+      SmsAction.OPEN_CALL_SETTINGS -> {
+        dialerController.openCallSettings()
+        result.success(true)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  private fun handlePhoneAccountActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.REGISTER_PHONE_ACCOUNT -> {
+        val success = phoneAccountController.registerPhoneAccount(accountId, accountLabel, accountCapabilities)
+        result.success(success)
+      }
+      SmsAction.UNREGISTER_PHONE_ACCOUNT -> {
+        val success = phoneAccountController.unregisterPhoneAccount(accountId)
+        result.success(success)
+      }
+      SmsAction.GET_PHONE_ACCOUNTS -> {
+        val accounts = phoneAccountController.getRegisteredPhoneAccounts()
+        result.success(accounts)
+      }
+      SmsAction.IS_PHONE_ACCOUNT_ENABLED -> {
+        val isEnabled = phoneAccountController.isPhoneAccountEnabled(accountId)
+        result.success(isEnabled)
+      }
+      else -> throw IllegalArgumentException()
+    }
   }
 
   @RequiresApi(Build.VERSION_CODES.M)

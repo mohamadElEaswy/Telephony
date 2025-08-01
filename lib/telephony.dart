@@ -558,6 +558,99 @@ class Telephony {
     final Map<String, dynamic> args = {"phoneNumber": phoneNumber};
     await _foregroundChannel.invokeMethod(DIAL_PHONE_NUMBER, args);
   }
+
+  ///
+  /// Request to set this app as the default dialer app.
+  ///
+  /// ### Requires Android API 29+ (Android Q)
+  ///
+  /// Returns true if the request was successfully initiated, false otherwise.
+  ///
+  Future<bool?> get requestDefaultDialer =>
+      _foregroundChannel.invokeMethod<bool>(REQUEST_DEFAULT_DIALER);
+
+  ///
+  /// Check if this app is currently the default dialer app.
+  ///
+  /// ### Requires Android API 29+ (Android Q)
+  ///
+  /// Returns true if this app is the default dialer, false otherwise.
+  ///
+  Future<bool?> get isDefaultDialer =>
+      _foregroundChannel.invokeMethod<bool>(IS_DEFAULT_DIALER);
+
+  ///
+  /// Open the call settings where users can manage phone accounts and calling preferences.
+  ///
+  Future<void> openCallSettings() async {
+    await _foregroundChannel.invokeMethod(OPEN_CALL_SETTINGS);
+  }
+
+  ///
+  /// Register a new phone account with the system.
+  ///
+  /// Parameters:
+  ///
+  /// - [accountId] : Unique identifier for the phone account
+  /// - [label] : Human-readable label for the account
+  /// - [capabilities] (optional) : Account capabilities (defaults to CAPABILITY_CALL_PROVIDER)
+  ///
+  /// Returns true if the account was successfully registered, false otherwise.
+  ///
+  Future<bool?> registerPhoneAccount(String accountId, String label,
+      {int capabilities = 0}) async {
+    assert(accountId.isNotEmpty, "accountId cannot be empty");
+    assert(label.isNotEmpty, "label cannot be empty");
+    final Map<String, dynamic> args = {
+      "accountId": accountId,
+      "label": label,
+      "capabilities": capabilities,
+    };
+    return _foregroundChannel.invokeMethod<bool>(REGISTER_PHONE_ACCOUNT, args);
+  }
+
+  ///
+  /// Unregister a phone account from the system.
+  ///
+  /// Parameters:
+  ///
+  /// - [accountId] : Unique identifier of the phone account to unregister
+  ///
+  /// Returns true if the account was successfully unregistered, false otherwise.
+  ///
+  Future<bool?> unregisterPhoneAccount(String accountId) async {
+    assert(accountId.isNotEmpty, "accountId cannot be empty");
+    final Map<String, dynamic> args = {"accountId": accountId};
+    return _foregroundChannel.invokeMethod<bool>(
+        UNREGISTER_PHONE_ACCOUNT, args);
+  }
+
+  ///
+  /// Get a list of all registered phone accounts for this app.
+  ///
+  /// Returns a list of maps containing account information (id, label, enabled).
+  ///
+  Future<List<Map<String, dynamic>>?> get getPhoneAccounts async {
+    final List<dynamic>? accounts = await _foregroundChannel
+        .invokeMethod<List<dynamic>>(GET_PHONE_ACCOUNTS);
+    return accounts?.cast<Map<String, dynamic>>();
+  }
+
+  ///
+  /// Check if a specific phone account is enabled.
+  ///
+  /// Parameters:
+  ///
+  /// - [accountId] : Unique identifier of the phone account to check
+  ///
+  /// Returns true if the account is enabled, false otherwise.
+  ///
+  Future<bool?> isPhoneAccountEnabled(String accountId) async {
+    assert(accountId.isNotEmpty, "accountId cannot be empty");
+    final Map<String, dynamic> args = {"accountId": accountId};
+    return _foregroundChannel.invokeMethod<bool>(
+        IS_PHONE_ACCOUNT_ENABLED, args);
+  }
 }
 
 ///

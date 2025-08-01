@@ -29,6 +29,8 @@ object Constants {
   const val GET_STATUS_REQUEST_CODE = 41
   const val PERMISSION_REQUEST_CODE = 51
   const val CALL_REQUEST_CODE = 61
+  const val DIALER_REQUEST_CODE = 71
+  const val PHONE_ACCOUNT_REQUEST_CODE = 81
 
   // Methods
   const val ON_MESSAGE = "onMessage"
@@ -59,6 +61,11 @@ object Constants {
   const val BACKGROUND_HANDLE = "backgroundHandle"
 
   const val PHONE_NUMBER = "phoneNumber"
+
+  // Dialer and Phone Account Arguments
+  const val ACCOUNT_ID = "accountId"
+  const val ACCOUNT_LABEL = "label"
+  const val ACCOUNT_CAPABILITIES = "capabilities"
 
   // Projections
   val DEFAULT_SMS_PROJECTION = listOf(Telephony.Sms._ID, Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE)

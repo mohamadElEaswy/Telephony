@@ -26,7 +26,7 @@ apply plugin: 'kotlin-android'
 
 android {
     namespace "com.shounakmulay.telephony"
-    compileSdk 34
+    compileSdk 35
 
     kotlinOptions {
         jvmTarget = "1.8"

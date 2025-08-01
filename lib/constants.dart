@@ -31,6 +31,13 @@ const REQUEST_PHONE_PERMISSION = "requestPhonePermissions";
 const REQUEST_PHONE_AND_SMS_PERMISSION = "requestPhoneAndSmsPermissions";
 const OPEN_DIALER = "openDialer";
 const DIAL_PHONE_NUMBER = "dialPhoneNumber";
+const REQUEST_DEFAULT_DIALER = "requestDefaultDialer";
+const IS_DEFAULT_DIALER = "isDefaultDialer";
+const OPEN_CALL_SETTINGS = "openCallSettings";
+const REGISTER_PHONE_ACCOUNT = "registerPhoneAccount";
+const UNREGISTER_PHONE_ACCOUNT = "unregisterPhoneAccount";
+const GET_PHONE_ACCOUNTS = "getPhoneAccounts";
+const IS_PHONE_ACCOUNT_ENABLED = "isPhoneAccountEnabled";
 
 const ON_MESSAGE = "onMessage";
 const SMS_SENT = "smsSent";
