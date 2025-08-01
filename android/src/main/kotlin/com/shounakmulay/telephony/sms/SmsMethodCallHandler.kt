@@ -371,8 +371,16 @@ class SmsMethodCallHandler(
       SmsAction.GET_SIM_STATE,
       SmsAction.IS_NETWORK_ROAMING,
       SmsAction.GET_SIGNAL_STRENGTH,
+      SmsAction.REQUEST_DEFAULT_DIALER,
+      SmsAction.IS_DEFAULT_DIALER,
+      SmsAction.OPEN_CALL_SETTINGS,
+      SmsAction.REGISTER_PHONE_ACCOUNT,
+      SmsAction.UNREGISTER_PHONE_ACCOUNT,
+      SmsAction.GET_PHONE_ACCOUNTS,
+      SmsAction.IS_PHONE_ACCOUNT_ENABLED,
       SmsAction.NO_SUCH_METHOD -> return true
     }
+    return true
   }
 
   fun setActivity(activity: Activity) {

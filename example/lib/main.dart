@@ -62,16 +62,67 @@ class _MyAppState extends State<MyApp> {
       appBar: AppBar(
         title: const Text('Plugin example app'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Center(child: Text("Latest received SMS: $_message")),
-          TextButton(
-              onPressed: () async {
-                await telephony.openDialer("123413453");
-              },
-              child: Text('Open Dialer'))
-        ],
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: Text("Latest received SMS: $_message")),
+            SizedBox(height: 20),
+            ElevatedButton(
+                onPressed: () async {
+                  await telephony.openDialer("123413453");
+                },
+                child: Text('Open Dialer')),
+            SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () async {
+                  bool? isDefault = await telephony.isDefaultDialer;
+                  setState(() {
+                    _message = "Is Default Dialer: ${isDefault ?? 'Unknown'}";
+                  });
+                },
+                child: Text('Check Default Dialer')),
+            SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () async {
+                  bool? success = await telephony.requestDefaultDialer;
+                  setState(() {
+                    _message = "Request Default Dialer: ${success ?? 'Failed'}";
+                  });
+                },
+                child: Text('Request Default Dialer')),
+            SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () async {
+                  await telephony.openCallSettings();
+                  setState(() {
+                    _message = "Opened call settings";
+                  });
+                },
+                child: Text('Open Call Settings')),
+            SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () async {
+                  bool? success = await telephony.registerPhoneAccount(
+                      "test_account", "Test SIP Account");
+                  setState(() {
+                    _message = "Register Account: ${success ?? 'Failed'}";
+                  });
+                },
+                child: Text('Register Phone Account')),
+            SizedBox(height: 10),
+            ElevatedButton(
+                onPressed: () async {
+                  List<Map<String, dynamic>>? accounts =
+                      await telephony.getPhoneAccounts;
+                  setState(() {
+                    _message = "Phone Accounts: ${accounts?.length ?? 0}";
+                  });
+                },
+                child: Text('Get Phone Accounts')),
+          ],
+        ),
       ),
     ));
   }
