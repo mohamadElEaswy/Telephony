@@ -18,25 +18,28 @@ class PhoneAccountController(private val context: Context) {
         capabilities: Int = PhoneAccount.CAPABILITY_CALL_PROVIDER
     ): Boolean {
         return try {
-            // Use a generic service class name or create a basic one
-            val componentName = ComponentName(context.packageName, "${context.packageName}.ConnectionService")
+            // Use the actual ConnectionService implementation
+            val componentName = ComponentName(context.packageName, "com.example.ranan.MyConnectionService")
             val phoneAccountHandle = PhoneAccountHandle(componentName, accountId)
             
             val phoneAccount = PhoneAccount.Builder(phoneAccountHandle, label)
-                .setCapabilities(capabilities)
+                .setCapabilities(capabilities or PhoneAccount.CAPABILITY_CALL_SUBJECT)
                 .setIcon(Icon.createWithResource(context, android.R.drawable.sym_action_call))
+                .setShortDescription(label)
+                .setSupportedUriSchemes(listOf("tel"))
                 .build()
             
             telecomManager.registerPhoneAccount(phoneAccount)
             true
         } catch (e: Exception) {
+            android.util.Log.e("PhoneAccountController", "Failed to register phone account", e)
             false
         }
     }
     
-    fun unregisterPhoneAccount(accountId: String): Boolean {
+            fun unregisterPhoneAccount(accountId: String): Boolean {
         return try {
-            val componentName = ComponentName(context.packageName, "${context.packageName}.ConnectionService")
+            val componentName = ComponentName(context.packageName, "com.example.ranan.MyConnectionService")
             val phoneAccountHandle = PhoneAccountHandle(componentName, accountId)
             telecomManager.unregisterPhoneAccount(phoneAccountHandle)
             true
@@ -62,7 +65,7 @@ class PhoneAccountController(private val context: Context) {
     
     fun isPhoneAccountEnabled(accountId: String): Boolean {
         return try {
-            val componentName = ComponentName(context.packageName, "${context.packageName}.ConnectionService")
+            val componentName = ComponentName(context.packageName, "com.example.ranan.MyConnectionService")
             val phoneAccountHandle = PhoneAccountHandle(componentName, accountId)
             val account = telecomManager.getPhoneAccount(phoneAccountHandle)
             account?.isEnabled ?: false

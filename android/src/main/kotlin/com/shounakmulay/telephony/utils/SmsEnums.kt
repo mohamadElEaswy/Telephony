@@ -40,6 +40,31 @@ enum class SmsAction(private val methodName: String) {
   UNREGISTER_PHONE_ACCOUNT("unregisterPhoneAccount"),
   GET_PHONE_ACCOUNTS("getPhoneAccounts"),
   IS_PHONE_ACCOUNT_ENABLED("isPhoneAccountEnabled"),
+  
+  // Call management actions
+  MAKE_CALL("makeCall"),
+  END_CALL("endCall"),
+  ANSWER_CALL("answerCall"),
+  REJECT_CALL("rejectCall"),
+  HOLD_CALL("holdCall"),
+  UNHOLD_CALL("unholdCall"),
+  MUTE_CALL("muteCall"),
+  UNMUTE_CALL("unmuteCall"),
+  GET_CALL_AUDIO_STATE("getCallAudioState"),
+  SET_CALL_AUDIO_ROUTE("setCallAudioRoute"),
+  PLAY_DTMF_TONE("playDtmfTone"),
+  STOP_DTMF_TONE("stopDtmfTone"),
+  
+  // Call notification actions
+  SHOW_INCOMING_CALL_NOTIFICATION("showIncomingCallNotification"),
+  HIDE_INCOMING_CALL_NOTIFICATION("hideIncomingCallNotification"),
+  SET_CALL_NOTIFICATION_CHANNEL("setCallNotificationChannel"),
+  
+  // Call capabilities actions
+  GET_CALL_CAPABILITIES("getCallCapabilities"),
+  CHECK_CALL_PERMISSION("checkCallPermission"),
+  REQUEST_CALL_PERMISSION("requestCallPermission"),
+  
   NO_SUCH_METHOD("noSuchMethod");
 
   companion object {
@@ -92,12 +117,31 @@ enum class SmsAction(private val methodName: String) {
       UNREGISTER_PHONE_ACCOUNT,
       GET_PHONE_ACCOUNTS,
       IS_PHONE_ACCOUNT_ENABLED -> ActionType.PHONE_ACCOUNT
+      MAKE_CALL,
+      END_CALL,
+      ANSWER_CALL,
+      REJECT_CALL,
+      HOLD_CALL,
+      UNHOLD_CALL,
+      MUTE_CALL,
+      UNMUTE_CALL,
+      GET_CALL_AUDIO_STATE,
+      SET_CALL_AUDIO_ROUTE,
+      PLAY_DTMF_TONE,
+      STOP_DTMF_TONE -> ActionType.CALL_MANAGEMENT
+      SHOW_INCOMING_CALL_NOTIFICATION,
+      HIDE_INCOMING_CALL_NOTIFICATION,
+      SET_CALL_NOTIFICATION_CHANNEL -> ActionType.CALL_NOTIFICATION
+      GET_CALL_CAPABILITIES,
+      CHECK_CALL_PERMISSION,
+      REQUEST_CALL_PERMISSION -> ActionType.CALL_CAPABILITIES
     }
   }
 }
 
 enum class ActionType {
-  GET_SMS, SEND_SMS, BACKGROUND, GET, PERMISSION, CALL, DIALER, PHONE_ACCOUNT
+  GET_SMS, SEND_SMS, BACKGROUND, GET, PERMISSION, CALL, DIALER, PHONE_ACCOUNT, 
+  CALL_MANAGEMENT, CALL_NOTIFICATION, CALL_CAPABILITIES
 }
 
 enum class ContentUri(val uri: Uri) {

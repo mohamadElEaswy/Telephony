@@ -39,6 +39,30 @@ const UNREGISTER_PHONE_ACCOUNT = "unregisterPhoneAccount";
 const GET_PHONE_ACCOUNTS = "getPhoneAccounts";
 const IS_PHONE_ACCOUNT_ENABLED = "isPhoneAccountEnabled";
 
+// Call management constants
+const MAKE_CALL = "makeCall";
+const END_CALL = "endCall";
+const ANSWER_CALL = "answerCall";
+const REJECT_CALL = "rejectCall";
+const HOLD_CALL = "holdCall";
+const UNHOLD_CALL = "unholdCall";
+const MUTE_CALL = "muteCall";
+const UNMUTE_CALL = "unmuteCall";
+const GET_CALL_AUDIO_STATE = "getCallAudioState";
+const SET_CALL_AUDIO_ROUTE = "setCallAudioRoute";
+const PLAY_DTMF_TONE = "playDtmfTone";
+const STOP_DTMF_TONE = "stopDtmfTone";
+
+// Call notification constants
+const SHOW_INCOMING_CALL_NOTIFICATION = "showIncomingCallNotification";
+const HIDE_INCOMING_CALL_NOTIFICATION = "hideIncomingCallNotification";
+const SET_CALL_NOTIFICATION_CHANNEL = "setCallNotificationChannel";
+
+// Call capabilities constants
+const GET_CALL_CAPABILITIES = "getCallCapabilities";
+const CHECK_CALL_PERMISSION = "checkCallPermission";
+const REQUEST_CALL_PERMISSION = "requestCallPermission";
+
 const ON_MESSAGE = "onMessage";
 const SMS_SENT = "smsSent";
 const SMS_DELIVERED = "smsDelivered";

@@ -630,10 +630,10 @@ class Telephony {
   ///
   /// Returns a list of maps containing account information (id, label, enabled).
   ///
-  Future<List<Map<String, dynamic>>?> get getPhoneAccounts async {
-    final List<dynamic>? accounts = await _foregroundChannel
+  Future<dynamic> get getPhoneAccounts async {
+    final dynamic accounts = await _foregroundChannel
         .invokeMethod<List<dynamic>>(GET_PHONE_ACCOUNTS);
-    return accounts?.cast<Map<String, dynamic>>();
+    return accounts;
   }
 
   ///
@@ -650,6 +650,219 @@ class Telephony {
     final Map<String, dynamic> args = {"accountId": accountId};
     return _foregroundChannel.invokeMethod<bool>(
         IS_PHONE_ACCOUNT_ENABLED, args);
+  }
+
+  ///
+  /// Make a phone call using the registered phone account.
+  ///
+  /// Parameters:
+  ///
+  /// - [phoneNumber] : The phone number to call
+  /// - [accountId] (optional) : The phone account to use for the call
+  ///
+  /// Returns true if the call was initiated successfully, false otherwise.
+  ///
+  Future<bool?> makeCall(String phoneNumber, {String? accountId}) async {
+    assert(phoneNumber.isNotEmpty, "phoneNumber cannot be empty");
+    final Map<String, dynamic> args = {
+      "phoneNumber": phoneNumber,
+      if (accountId != null) "accountId": accountId,
+    };
+    return _foregroundChannel.invokeMethod<bool>(MAKE_CALL, args);
+  }
+
+  ///
+  /// End the current active call.
+  ///
+  /// Returns true if the call was ended successfully, false otherwise.
+  ///
+  Future<bool?> endCall() async {
+    return _foregroundChannel.invokeMethod<bool>(END_CALL);
+  }
+
+  ///
+  /// Answer an incoming call.
+  ///
+  /// Returns true if the call was answered successfully, false otherwise.
+  ///
+  Future<bool?> answerCall() async {
+    return _foregroundChannel.invokeMethod<bool>(ANSWER_CALL);
+  }
+
+  ///
+  /// Reject an incoming call.
+  ///
+  /// Returns true if the call was rejected successfully, false otherwise.
+  ///
+  Future<bool?> rejectCall() async {
+    return _foregroundChannel.invokeMethod<bool>(REJECT_CALL);
+  }
+
+  ///
+  /// Put the current call on hold.
+  ///
+  /// Returns true if the call was put on hold successfully, false otherwise.
+  ///
+  Future<bool?> holdCall() async {
+    return _foregroundChannel.invokeMethod<bool>(HOLD_CALL);
+  }
+
+  ///
+  /// Take the current call off hold.
+  ///
+  /// Returns true if the call was taken off hold successfully, false otherwise.
+  ///
+  Future<bool?> unholdCall() async {
+    return _foregroundChannel.invokeMethod<bool>(UNHOLD_CALL);
+  }
+
+  ///
+  /// Mute the current call.
+  ///
+  /// Returns true if the call was muted successfully, false otherwise.
+  ///
+  Future<bool?> muteCall() async {
+    return _foregroundChannel.invokeMethod<bool>(MUTE_CALL);
+  }
+
+  ///
+  /// Unmute the current call.
+  ///
+  /// Returns true if the call was unmuted successfully, false otherwise.
+  ///
+  Future<bool?> unmuteCall() async {
+    return _foregroundChannel.invokeMethod<bool>(UNMUTE_CALL);
+  }
+
+  ///
+  /// Get the current call audio state.
+  ///
+  /// Returns a map containing audio state information.
+  ///
+  Future<Map<String, dynamic>?> getCallAudioState() async {
+    return _foregroundChannel
+        .invokeMethod<Map<String, dynamic>>(GET_CALL_AUDIO_STATE);
+  }
+
+  ///
+  /// Set the call audio route (speaker, earpiece, bluetooth, etc.).
+  ///
+  /// Parameters:
+  ///
+  /// - [route] : The audio route to set (0=earpiece, 1=speaker, 2=bluetooth, etc.)
+  ///
+  /// Returns true if the audio route was set successfully, false otherwise.
+  ///
+  Future<bool?> setCallAudioRoute(int route) async {
+    final Map<String, dynamic> args = {"route": route};
+    return _foregroundChannel.invokeMethod<bool>(SET_CALL_AUDIO_ROUTE, args);
+  }
+
+  ///
+  /// Play a DTMF tone during a call.
+  ///
+  /// Parameters:
+  ///
+  /// - [tone] : The DTMF tone to play (0-9, *, #, A-D)
+  ///
+  /// Returns true if the tone was played successfully, false otherwise.
+  ///
+  Future<bool?> playDtmfTone(String tone) async {
+    assert(tone.isNotEmpty, "tone cannot be empty");
+    final Map<String, dynamic> args = {"tone": tone};
+    return _foregroundChannel.invokeMethod<bool>(PLAY_DTMF_TONE, args);
+  }
+
+  ///
+  /// Stop playing DTMF tones.
+  ///
+  /// Returns true if the tone was stopped successfully, false otherwise.
+  ///
+  Future<bool?> stopDtmfTone() async {
+    return _foregroundChannel.invokeMethod<bool>(STOP_DTMF_TONE);
+  }
+
+  ///
+  /// Show an incoming call notification.
+  ///
+  /// Parameters:
+  ///
+  /// - [phoneNumber] : The phone number of the incoming call
+  /// - [callerName] (optional) : The name of the caller
+  ///
+  /// Returns true if the notification was shown successfully, false otherwise.
+  ///
+  Future<bool?> showIncomingCallNotification(String phoneNumber,
+      {String? callerName}) async {
+    assert(phoneNumber.isNotEmpty, "phoneNumber cannot be empty");
+    final Map<String, dynamic> args = {
+      "phoneNumber": phoneNumber,
+      if (callerName != null) "callerName": callerName,
+    };
+    return _foregroundChannel.invokeMethod<bool>(
+        SHOW_INCOMING_CALL_NOTIFICATION, args);
+  }
+
+  ///
+  /// Hide the incoming call notification.
+  ///
+  /// Returns true if the notification was hidden successfully, false otherwise.
+  ///
+  Future<bool?> hideIncomingCallNotification() async {
+    return _foregroundChannel
+        .invokeMethod<bool>(HIDE_INCOMING_CALL_NOTIFICATION);
+  }
+
+  ///
+  /// Set up the call notification channel.
+  ///
+  /// Parameters:
+  ///
+  /// - [channelId] : The notification channel ID
+  /// - [channelName] : The notification channel name
+  /// - [description] (optional) : The notification channel description
+  ///
+  /// Returns true if the channel was set up successfully, false otherwise.
+  ///
+  Future<bool?> setCallNotificationChannel(String channelId, String channelName,
+      {String? description}) async {
+    assert(channelId.isNotEmpty, "channelId cannot be empty");
+    assert(channelName.isNotEmpty, "channelName cannot be empty");
+    final Map<String, dynamic> args = {
+      "channelId": channelId,
+      "channelName": channelName,
+      if (description != null) "description": description,
+    };
+    return _foregroundChannel.invokeMethod<bool>(
+        SET_CALL_NOTIFICATION_CHANNEL, args);
+  }
+
+  ///
+  /// Get the call capabilities for the current device.
+  ///
+  /// Returns a map containing call capability information.
+  ///
+  Future<Map<String, dynamic>?> getCallCapabilities() async {
+    return _foregroundChannel
+        .invokeMethod<Map<String, dynamic>>(GET_CALL_CAPABILITIES);
+  }
+
+  ///
+  /// Check if the app has call permissions.
+  ///
+  /// Returns true if the app has call permissions, false otherwise.
+  ///
+  Future<bool?> checkCallPermission() async {
+    return _foregroundChannel.invokeMethod<bool>(CHECK_CALL_PERMISSION);
+  }
+
+  ///
+  /// Request call permissions from the user.
+  ///
+  /// Returns true if permissions were granted, false otherwise.
+  ///
+  Future<bool?> requestCallPermission() async {
+    return _foregroundChannel.invokeMethod<bool>(REQUEST_CALL_PERMISSION);
   }
 }
 

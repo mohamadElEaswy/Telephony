@@ -9,6 +9,7 @@ import com.shounakmulay.telephony.sms.SmsController
 import com.shounakmulay.telephony.sms.SmsMethodCallHandler
 import com.shounakmulay.telephony.dialer.DialerController
 import com.shounakmulay.telephony.dialer.PhoneAccountController
+import com.shounakmulay.telephony.dialer.CallController
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -30,6 +31,7 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
   private lateinit var dialerController: DialerController
 
   private lateinit var phoneAccountController: PhoneAccountController
+  private lateinit var callController: CallController
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     if (!this::binaryMessenger.isInitialized) {
@@ -66,7 +68,8 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
     permissionsController = PermissionsController(context)
     dialerController = DialerController(context)
     phoneAccountController = PhoneAccountController(context)
-    smsMethodCallHandler = SmsMethodCallHandler(context, smsController, permissionsController, dialerController, phoneAccountController)
+    callController = CallController(context)
+    smsMethodCallHandler = SmsMethodCallHandler(context, smsController, permissionsController, dialerController, phoneAccountController, callController)
 
     smsChannel = MethodChannel(messenger, CHANNEL_SMS)
     smsChannel.setMethodCallHandler(smsMethodCallHandler)

@@ -14,6 +14,7 @@ import com.shounakmulay.telephony.PermissionsController
 import com.shounakmulay.telephony.utils.ActionType
 import com.shounakmulay.telephony.dialer.DialerController
 import com.shounakmulay.telephony.dialer.PhoneAccountController
+import com.shounakmulay.telephony.dialer.CallController
 import com.shounakmulay.telephony.utils.Constants
 import com.shounakmulay.telephony.utils.Constants.ADDRESS
 import com.shounakmulay.telephony.utils.Constants.BACKGROUND_HANDLE
@@ -53,6 +54,9 @@ import com.shounakmulay.telephony.utils.SmsAction
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import com.shounakmulay.telephony.utils.Constants.CALL_MANAGEMENT_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.CALL_NOTIFICATION_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.CALL_CAPABILITIES_REQUEST_CODE
 
 
 class SmsMethodCallHandler(
@@ -60,7 +64,8 @@ class SmsMethodCallHandler(
     private val smsController: SmsController,
     private val permissionsController: PermissionsController,
     private val dialerController: DialerController,
-    private val phoneAccountController: PhoneAccountController
+    private val phoneAccountController: PhoneAccountController,
+    private val callController: CallController
 ) : PluginRegistry.RequestPermissionsResultListener,
     MethodChannel.MethodCallHandler,
     BroadcastReceiver() {
@@ -91,6 +96,16 @@ class SmsMethodCallHandler(
   private lateinit var accountLabel: String
   private var accountCapabilities: Int = -1
 
+  // Call management variables
+  private var callPhoneNumber: String = ""
+  private var callAccountId: String? = null
+  private var callRoute: Int = 0
+  private var callTone: String = ""
+  private var callChannelId: String = ""
+  private var callChannelName: String = ""
+  private var callDescription: String? = null
+  private var callCallerName: String? = null
+
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     this.result = result
 
@@ -100,6 +115,16 @@ class SmsMethodCallHandler(
       result.notImplemented()
       return
     }
+
+    // Extract call-related arguments
+    callPhoneNumber = call.argument<String>("phoneNumber") ?: ""
+    callAccountId = call.argument<String>("accountId")
+    callRoute = call.argument<Int>("route") ?: 0
+    callTone = call.argument<String>("tone") ?: ""
+    callChannelId = call.argument<String>("channelId") ?: ""
+    callChannelName = call.argument<String>("channelName") ?: ""
+    callDescription = call.argument<String>("description")
+    callCallerName = call.argument<String>("callerName")
 
     when (action.toActionType()) {
       ActionType.GET_SMS -> {
@@ -174,6 +199,9 @@ class SmsMethodCallHandler(
         }
         handleMethod(action, PHONE_ACCOUNT_REQUEST_CODE)
       }
+      ActionType.CALL_MANAGEMENT -> handleMethod(action, CALL_MANAGEMENT_REQUEST_CODE)
+      ActionType.CALL_NOTIFICATION -> handleMethod(action, CALL_NOTIFICATION_REQUEST_CODE)
+      ActionType.CALL_CAPABILITIES -> handleMethod(action, CALL_CAPABILITIES_REQUEST_CODE)
     }
   }
 
@@ -199,6 +227,9 @@ class SmsMethodCallHandler(
         ActionType.CALL -> handleCallActions(smsAction)
         ActionType.DIALER -> handleDialerActions(smsAction)
         ActionType.PHONE_ACCOUNT -> handlePhoneAccountActions(smsAction)
+        ActionType.CALL_MANAGEMENT -> handleCallManagementActions(smsAction)
+        ActionType.CALL_NOTIFICATION -> handleCallNotificationActions(smsAction)
+        ActionType.CALL_CAPABILITIES -> handleCallCapabilitiesActions(smsAction)
       }
     } catch (e: IllegalArgumentException) {
       result.error(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
@@ -378,6 +409,24 @@ class SmsMethodCallHandler(
       SmsAction.UNREGISTER_PHONE_ACCOUNT,
       SmsAction.GET_PHONE_ACCOUNTS,
       SmsAction.IS_PHONE_ACCOUNT_ENABLED,
+      SmsAction.MAKE_CALL,
+      SmsAction.END_CALL,
+      SmsAction.ANSWER_CALL,
+      SmsAction.REJECT_CALL,
+      SmsAction.HOLD_CALL,
+      SmsAction.UNHOLD_CALL,
+      SmsAction.MUTE_CALL,
+      SmsAction.UNMUTE_CALL,
+      SmsAction.GET_CALL_AUDIO_STATE,
+      SmsAction.SET_CALL_AUDIO_ROUTE,
+      SmsAction.PLAY_DTMF_TONE,
+      SmsAction.STOP_DTMF_TONE,
+      SmsAction.SHOW_INCOMING_CALL_NOTIFICATION,
+      SmsAction.HIDE_INCOMING_CALL_NOTIFICATION,
+      SmsAction.SET_CALL_NOTIFICATION_CHANNEL,
+      SmsAction.GET_CALL_CAPABILITIES,
+      SmsAction.CHECK_CALL_PERMISSION,
+      SmsAction.REQUEST_CALL_PERMISSION,
       SmsAction.NO_SUCH_METHOD -> return true
     }
     return true
@@ -430,6 +479,96 @@ class SmsMethodCallHandler(
       SmsAction.IS_PHONE_ACCOUNT_ENABLED -> {
         val isEnabled = phoneAccountController.isPhoneAccountEnabled(accountId)
         result.success(isEnabled)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  private fun handleCallManagementActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.MAKE_CALL -> {
+        val success = callController.makeCall(callPhoneNumber, callAccountId)
+        result.success(success)
+      }
+      SmsAction.END_CALL -> {
+        val success = callController.endCall()
+        result.success(success)
+      }
+      SmsAction.ANSWER_CALL -> {
+        val success = callController.answerCall()
+        result.success(success)
+      }
+      SmsAction.REJECT_CALL -> {
+        val success = callController.rejectCall()
+        result.success(success)
+      }
+      SmsAction.HOLD_CALL -> {
+        val success = callController.holdCall()
+        result.success(success)
+      }
+      SmsAction.UNHOLD_CALL -> {
+        val success = callController.unholdCall()
+        result.success(success)
+      }
+      SmsAction.MUTE_CALL -> {
+        val success = callController.muteCall()
+        result.success(success)
+      }
+      SmsAction.UNMUTE_CALL -> {
+        val success = callController.unmuteCall()
+        result.success(success)
+      }
+      SmsAction.GET_CALL_AUDIO_STATE -> {
+        val audioState = callController.getCallAudioState()
+        result.success(audioState)
+      }
+      SmsAction.SET_CALL_AUDIO_ROUTE -> {
+        val success = callController.setCallAudioRoute(callRoute)
+        result.success(success)
+      }
+      SmsAction.PLAY_DTMF_TONE -> {
+        val success = callController.playDtmfTone(callTone)
+        result.success(success)
+      }
+      SmsAction.STOP_DTMF_TONE -> {
+        val success = callController.stopDtmfTone()
+        result.success(success)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  private fun handleCallNotificationActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.SHOW_INCOMING_CALL_NOTIFICATION -> {
+        val success = callController.showIncomingCallNotification(callPhoneNumber, callCallerName)
+        result.success(success)
+      }
+      SmsAction.HIDE_INCOMING_CALL_NOTIFICATION -> {
+        val success = callController.hideIncomingCallNotification()
+        result.success(success)
+      }
+      SmsAction.SET_CALL_NOTIFICATION_CHANNEL -> {
+        val success = callController.setCallNotificationChannel(callChannelId, callChannelName, callDescription)
+        result.success(success)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  private fun handleCallCapabilitiesActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.GET_CALL_CAPABILITIES -> {
+        val capabilities = callController.getCallCapabilities()
+        result.success(capabilities)
+      }
+      SmsAction.CHECK_CALL_PERMISSION -> {
+        val hasPermission = callController.checkCallPermission()
+        result.success(hasPermission)
+      }
+      SmsAction.REQUEST_CALL_PERMISSION -> {
+        val success = callController.requestCallPermission()
+        result.success(success)
       }
       else -> throw IllegalArgumentException()
     }

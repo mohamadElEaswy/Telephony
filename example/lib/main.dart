@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:another_telephony/telephony.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -105,7 +107,10 @@ class _MyAppState extends State<MyApp> {
             ElevatedButton(
                 onPressed: () async {
                   bool? success = await telephony.registerPhoneAccount(
-                      "test_account", "Test SIP Account");
+                    "test_account",
+                    "Test SIP Account",
+                    capabilities: 1,
+                  );
                   setState(() {
                     _message = "Register Account: ${success ?? 'Failed'}";
                   });
@@ -114,11 +119,20 @@ class _MyAppState extends State<MyApp> {
             SizedBox(height: 10),
             ElevatedButton(
                 onPressed: () async {
-                  List<Map<String, dynamic>>? accounts =
-                      await telephony.getPhoneAccounts;
+                  dynamic accounts = await telephony.getPhoneAccounts;
                   setState(() {
-                    _message = "Phone Accounts: ${accounts?.length ?? 0}";
+                    _message = "Phone Accounts: ${accounts}";
                   });
+                },
+                child: Text('Get Phone Accounts')),
+            ElevatedButton(
+                onPressed: () async {
+                  dynamic accounts = await telephony.getPhoneAccounts;
+                  setState(() {
+                    _message = "Phone Accounts: ${accounts}";
+                  });
+                  log("Phone Accounts: ${accounts}");
+                  log("Phone Accounts: ${accounts}");
                 },
                 child: Text('Get Phone Accounts')),
           ],
