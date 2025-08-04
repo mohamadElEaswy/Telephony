@@ -11,10 +11,12 @@ import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import android.telecom.Call
 import android.telecom.InCallService
 import android.telecom.VideoProfile
 import android.util.Log
+import androidx.annotation.RequiresApi
 
 class TelephonyInCallService : InCallService() {
 
@@ -44,14 +46,26 @@ class TelephonyInCallService : InCallService() {
     private fun registerCallActionReceiver() {
         callActionReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d(TAG, "Broadcast received: ${intent?.action}")
+                val callId = intent?.getStringExtra("call_id")
+                val phoneNumber = intent?.getStringExtra("phone_number")
+                
                 when (intent?.action) {
                     ACTION_ANSWER_CALL -> {
-                        Log.d(TAG, "Answer call action received")
-                        CallBridge.answerCall()
+                        Log.d(TAG, "Answer call action received for call: $callId, phone: $phoneNumber")
+                        val success = CallBridge.answerCall()
+                        if (success) {
+                            removeCallNotification()
+                        }
+                        Log.d(TAG, "Answer call result: $success")
                     }
                     ACTION_REJECT_CALL -> {
-                        Log.d(TAG, "Reject call action received")
-                        CallBridge.rejectCall()
+                        Log.d(TAG, "Reject call action received for call: $callId, phone: $phoneNumber")
+                        val success = CallBridge.rejectCall()
+                        if (success) {
+                            removeCallNotification()
+                        }
+                        Log.d(TAG, "Reject call result: $success")
                     }
                 }
             }
@@ -61,7 +75,12 @@ class TelephonyInCallService : InCallService() {
             addAction(ACTION_ANSWER_CALL)
             addAction(ACTION_REJECT_CALL)
         }
-        registerReceiver(callActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(callActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(callActionReceiver, filter)
+        }
     }
 
     override fun onCallAdded(call: Call?) {
@@ -149,55 +168,73 @@ class TelephonyInCallService : InCallService() {
         CallBridge.setCurrentCall(null)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun showIncomingCallNotification(call: Call) {
-        createNotificationChannel()
+        try {
+            createNotificationChannel()
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val phoneNumber = call.details?.handle?.schemeSpecificPart ?: "Unknown"
+            val callerName = call.details?.callerDisplayName ?: phoneNumber
 
-        // Create intent for full-screen incoming call UI
-        val intent = Intent(Intent.ACTION_MAIN, null).apply {
-            flags = Intent.FLAG_ACTIVITY_NO_USER_ACTION or Intent.FLAG_ACTIVITY_NEW_TASK
-            // You would set your incoming call activity here
-            // setClass(this@TelephonyInCallService, YourIncomingCallActivity::class.java)
+            Log.d(TAG, "Creating notification for call from: $phoneNumber ($callerName)")
+
+            // Create intent for full-screen incoming call UI
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                flags = Intent.FLAG_ACTIVITY_NO_USER_ACTION or Intent.FLAG_ACTIVITY_NEW_TASK
+                // You would set your incoming call activity here
+                // setClass(this@TelephonyInCallService, YourIncomingCallActivity::class.java)
+            }
+
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                1,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val notification = Notification.Builder(this, NOTIFICATION_CHANNEL_ID).apply {
+                setOngoing(true)
+                setCategory(Notification.CATEGORY_CALL)
+                setVisibility(Notification.VISIBILITY_PUBLIC)
+                setPriority(Notification.PRIORITY_MAX)
+                setContentIntent(pendingIntent)
+                setFullScreenIntent(pendingIntent, true)
+                setSmallIcon(android.R.drawable.sym_action_call)
+                setContentTitle(callerName)
+                setContentText("Incoming call")
+                setSubText(phoneNumber)
+                setShowWhen(true)
+                setWhen(System.currentTimeMillis())
+                setAutoCancel(false)
+
+                // Add action buttons for answer/reject
+                addAction(
+                    android.R.drawable.sym_action_call,
+                    "Answer",
+                    createAnswerPendingIntent(call)
+                )
+                addAction(
+                    android.R.drawable.sym_call_missed,
+                    "Reject",
+                    createRejectPendingIntent(call)
+                )
+            }.build()
+
+            Log.d(TAG, "Displaying notification with ID: $NOTIFICATION_ID")
+            notificationManager.notify(NOTIFICATION_ID, notification)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show incoming call notification", e)
         }
-
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            1,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val notification = Notification.Builder(this, NOTIFICATION_CHANNEL_ID).apply {
-            setOngoing(true)
-            setPriority(Notification.PRIORITY_HIGH)
-            setContentIntent(pendingIntent)
-            setFullScreenIntent(pendingIntent, true)
-            setSmallIcon(android.R.drawable.sym_action_call)
-            setContentTitle("Incoming Call")
-            setContentText(call.details?.handle?.schemeSpecificPart ?: "Unknown")
-
-            // Add action buttons for answer/reject
-            addAction(
-                android.R.drawable.sym_action_call,
-                "Answer",
-                createAnswerPendingIntent(call)
-            )
-            addAction(
-                android.R.drawable.sym_call_missed,
-                "Reject",
-                createRejectPendingIntent(call)
-            )
-        }.build()
-
-        notificationManager.notify(NOTIFICATION_CHANNEL_ID, NOTIFICATION_ID, notification)
     }
 
     private fun removeCallNotification() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_ID)
+        notificationManager.cancel(NOTIFICATION_ID)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -227,7 +264,9 @@ class TelephonyInCallService : InCallService() {
 
     private fun createAnswerPendingIntent(call: Call): PendingIntent {
         val intent = Intent(ACTION_ANSWER_CALL).apply {
+            setPackage(packageName) // Explicit package name for security and reliability
             putExtra("call_id", call.details?.id)
+            putExtra("phone_number", call.details?.handle?.schemeSpecificPart)
         }
         return PendingIntent.getBroadcast(
             this,
@@ -239,7 +278,9 @@ class TelephonyInCallService : InCallService() {
 
     private fun createRejectPendingIntent(call: Call): PendingIntent {
         val intent = Intent(ACTION_REJECT_CALL).apply {
+            setPackage(packageName) // Explicit package name for security and reliability
             putExtra("call_id", call.details?.id)
+            putExtra("phone_number", call.details?.handle?.schemeSpecificPart)
         }
         return PendingIntent.getBroadcast(
             this,
