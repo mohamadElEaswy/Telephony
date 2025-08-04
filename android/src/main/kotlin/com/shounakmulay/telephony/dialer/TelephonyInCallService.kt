@@ -4,13 +4,16 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import android.telecom.Call
 import android.telecom.InCallService
+import android.telecom.VideoProfile
 import android.util.Log
 
 class TelephonyInCallService : InCallService() {
@@ -19,6 +22,44 @@ class TelephonyInCallService : InCallService() {
         private const val TAG = "TelephonyInCallService"
         private const val NOTIFICATION_CHANNEL_ID = "incoming_calls"
         private const val NOTIFICATION_ID = 1001
+        private const val ACTION_ANSWER_CALL = "ANSWER_CALL"
+        private const val ACTION_REJECT_CALL = "REJECT_CALL"
+    }
+
+    private lateinit var callActionReceiver: BroadcastReceiver
+    private var currentCall: Call? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        registerCallActionReceiver()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(callActionReceiver)
+    }
+
+    private fun registerCallActionReceiver() {
+        callActionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    ACTION_ANSWER_CALL -> {
+                        Log.d(TAG, "Answer call action received")
+                        currentCall?.answer(VideoProfile.STATE_AUDIO_ONLY)
+                    }
+                    ACTION_REJECT_CALL -> {
+                        Log.d(TAG, "Reject call action received")
+                        currentCall?.reject(false, null)
+                    }
+                }
+            }
+        }
+        
+        val filter = IntentFilter().apply {
+            addAction(ACTION_ANSWER_CALL)
+            addAction(ACTION_REJECT_CALL)
+        }
+        registerReceiver(callActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
     }
 
     override fun onCallAdded(call: Call?) {
@@ -56,6 +97,7 @@ class TelephonyInCallService : InCallService() {
     }
 
     private fun handleCallAdded(call: Call) {
+        currentCall = call
         when (call.state) {
             Call.STATE_RINGING -> {
                 Log.d(TAG, "Incoming call detected")
@@ -84,6 +126,7 @@ class TelephonyInCallService : InCallService() {
         Log.d(TAG, "Call removed: ${call.details?.handle}")
         // Remove any notifications or UI elements for this call
         removeCallNotification()
+        currentCall = null
     }
 
     private fun showIncomingCallNotification(call: Call) {
@@ -163,7 +206,7 @@ class TelephonyInCallService : InCallService() {
     }
 
     private fun createAnswerPendingIntent(call: Call): PendingIntent {
-        val intent = Intent("ANSWER_CALL").apply {
+        val intent = Intent(ACTION_ANSWER_CALL).apply {
             putExtra("call_id", call.details?.id)
         }
         return PendingIntent.getBroadcast(
@@ -175,7 +218,7 @@ class TelephonyInCallService : InCallService() {
     }
 
     private fun createRejectPendingIntent(call: Call): PendingIntent {
-        val intent = Intent("REJECT_CALL").apply {
+        val intent = Intent(ACTION_REJECT_CALL).apply {
             putExtra("call_id", call.details?.id)
         }
         return PendingIntent.getBroadcast(

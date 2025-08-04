@@ -739,9 +739,8 @@ class Telephony {
   ///
   /// Returns a map containing audio state information.
   ///
-  Future<Map<String, dynamic>?> getCallAudioState() async {
-    return _foregroundChannel
-        .invokeMethod<Map<String, dynamic>>(GET_CALL_AUDIO_STATE);
+  Future<dynamic> getCallAudioState() async {
+    return _foregroundChannel.invokeMethod(GET_CALL_AUDIO_STATE);
   }
 
   ///
@@ -842,9 +841,8 @@ class Telephony {
   ///
   /// Returns a map containing call capability information.
   ///
-  Future<Map<String, dynamic>?> getCallCapabilities() async {
-    return _foregroundChannel
-        .invokeMethod<Map<String, dynamic>>(GET_CALL_CAPABILITIES);
+  Future<dynamic> getCallCapabilities() async {
+    return _foregroundChannel.invokeMethod(GET_CALL_CAPABILITIES);
   }
 
   ///

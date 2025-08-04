@@ -71,6 +71,7 @@ class SmsMethodCallHandler(
     BroadcastReceiver() {
 
   private lateinit var result: MethodChannel.Result
+  private var isResultSubmitted = false
   private lateinit var action: SmsAction
   private lateinit var foregroundChannel: MethodChannel
   private lateinit var activity: Activity
@@ -108,6 +109,7 @@ class SmsMethodCallHandler(
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     this.result = result
+    this.isResultSubmitted = false
 
     action = SmsAction.fromMethod(call.method)
 
@@ -223,7 +225,7 @@ class SmsMethodCallHandler(
         ActionType.SEND_SMS -> handleSendSmsActions(smsAction)
         ActionType.BACKGROUND -> handleBackgroundActions(smsAction)
         ActionType.GET -> handleGetActions(smsAction)
-        ActionType.PERMISSION -> result.success(true)
+        ActionType.PERMISSION -> safeResultSuccess(true)
         ActionType.CALL -> handleCallActions(smsAction)
         ActionType.DIALER -> handleDialerActions(smsAction)
         ActionType.PHONE_ACCOUNT -> handlePhoneAccountActions(smsAction)
@@ -232,9 +234,9 @@ class SmsMethodCallHandler(
         ActionType.CALL_CAPABILITIES -> handleCallCapabilitiesActions(smsAction)
       }
     } catch (e: IllegalArgumentException) {
-      result.error(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
+      safeResultError(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
     } catch (e: RuntimeException) {
-      result.error(FAILED_FETCH, e.message, null)
+      safeResultError(FAILED_FETCH, e.message, null)
     }
   }
 
@@ -250,7 +252,7 @@ class SmsMethodCallHandler(
       else -> throw IllegalArgumentException()
     }
     val messages = smsController.getMessages(contentUri, projection!!, selection, selectionArgs, sortOrder)
-    result.success(messages)
+    safeResultSuccess(messages)
   }
 
   private fun handleSendSmsActions(smsAction: SmsAction) {
@@ -271,7 +273,7 @@ class SmsMethodCallHandler(
       SmsAction.SEND_SMS_INTENT -> smsController.sendSmsIntent(address, messageBody)
       else -> throw IllegalArgumentException()
     }
-    result.success(null)
+    safeResultSuccess(null)
   }
 
   private fun handleBackgroundActions(smsAction: SmsAction) {
@@ -312,23 +314,23 @@ class SmsMethodCallHandler(
         SmsAction.GET_SIGNAL_STRENGTH -> {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             getSignalStrength()
-                ?: result.error("SERVICE_STATE_NULL", "Error getting service state", null)
+                ?: safeResultError("SERVICE_STATE_NULL", "Error getting service state", null)
 
           } else {
-            result.error("INCORRECT_SDK_VERSION", "getServiceState() can only be called on Android Q and above", null)
+            safeResultError("INCORRECT_SDK_VERSION", "getServiceState() can only be called on Android Q and above", null)
           }
         }
         SmsAction.GET_SERVICE_STATE -> {
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getServiceState()
-                ?: result.error("SERVICE_STATE_NULL", "Error getting service state", null)
+                ?: safeResultError("SERVICE_STATE_NULL", "Error getting service state", null)
           } else {
-            result.error("INCORRECT_SDK_VERSION", "getServiceState() can only be called on Android O and above", null)
+            safeResultError("INCORRECT_SDK_VERSION", "getServiceState() can only be called on Android O and above", null)
           }
         }
         else -> throw IllegalArgumentException()
       }
-      result.success(value)
+      safeResultSuccess(value)
     }
   }
 
@@ -441,22 +443,22 @@ class SmsMethodCallHandler(
       SmsAction.REQUEST_DEFAULT_DIALER -> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
           val success = dialerController.requestDefaultDialerRole(activity)
-          result.success(success)
+          safeResultSuccess(success)
         } else {
-          result.error("NOT_SUPPORTED", "Requires Android API 29+", null)
+          safeResultError("NOT_SUPPORTED", "Requires Android API 29+", null)
         }
       }
       SmsAction.IS_DEFAULT_DIALER -> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
           val isDefault = dialerController.isDefaultDialer()
-          result.success(isDefault)
+          safeResultSuccess(isDefault)
         } else {
-          result.error("NOT_SUPPORTED", "Requires Android API 29+", null)
+          safeResultError("NOT_SUPPORTED", "Requires Android API 29+", null)
         }
       }
       SmsAction.OPEN_CALL_SETTINGS -> {
         dialerController.openCallSettings()
-        result.success(true)
+        safeResultSuccess(true)
       }
       else -> throw IllegalArgumentException()
     }
@@ -466,19 +468,19 @@ class SmsMethodCallHandler(
     when (smsAction) {
       SmsAction.REGISTER_PHONE_ACCOUNT -> {
         val success = phoneAccountController.registerPhoneAccount(accountId, accountLabel, accountCapabilities)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.UNREGISTER_PHONE_ACCOUNT -> {
         val success = phoneAccountController.unregisterPhoneAccount(accountId)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.GET_PHONE_ACCOUNTS -> {
         val accounts = phoneAccountController.getRegisteredPhoneAccounts()
-        result.success(accounts)
+        safeResultSuccess(accounts)
       }
       SmsAction.IS_PHONE_ACCOUNT_ENABLED -> {
         val isEnabled = phoneAccountController.isPhoneAccountEnabled(accountId)
-        result.success(isEnabled)
+        safeResultSuccess(isEnabled)
       }
       else -> throw IllegalArgumentException()
     }
@@ -488,51 +490,51 @@ class SmsMethodCallHandler(
     when (smsAction) {
       SmsAction.MAKE_CALL -> {
         val success = callController.makeCall(callPhoneNumber, callAccountId)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.END_CALL -> {
         val success = callController.endCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.ANSWER_CALL -> {
         val success = callController.answerCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.REJECT_CALL -> {
         val success = callController.rejectCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.HOLD_CALL -> {
         val success = callController.holdCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.UNHOLD_CALL -> {
         val success = callController.unholdCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.MUTE_CALL -> {
         val success = callController.muteCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.UNMUTE_CALL -> {
         val success = callController.unmuteCall()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.GET_CALL_AUDIO_STATE -> {
         val audioState = callController.getCallAudioState()
-        result.success(audioState)
+        safeResultSuccess(audioState)
       }
       SmsAction.SET_CALL_AUDIO_ROUTE -> {
         val success = callController.setCallAudioRoute(callRoute)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.PLAY_DTMF_TONE -> {
         val success = callController.playDtmfTone(callTone)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.STOP_DTMF_TONE -> {
         val success = callController.stopDtmfTone()
-        result.success(success)
+        safeResultSuccess(success)
       }
       else -> throw IllegalArgumentException()
     }
@@ -542,15 +544,15 @@ class SmsMethodCallHandler(
     when (smsAction) {
       SmsAction.SHOW_INCOMING_CALL_NOTIFICATION -> {
         val success = callController.showIncomingCallNotification(callPhoneNumber, callCallerName)
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.HIDE_INCOMING_CALL_NOTIFICATION -> {
         val success = callController.hideIncomingCallNotification()
-        result.success(success)
+        safeResultSuccess(success)
       }
       SmsAction.SET_CALL_NOTIFICATION_CHANNEL -> {
         val success = callController.setCallNotificationChannel(callChannelId, callChannelName, callDescription)
-        result.success(success)
+        safeResultSuccess(success)
       }
       else -> throw IllegalArgumentException()
     }
@@ -560,15 +562,15 @@ class SmsMethodCallHandler(
     when (smsAction) {
       SmsAction.GET_CALL_CAPABILITIES -> {
         val capabilities = callController.getCallCapabilities()
-        result.success(capabilities)
+        safeResultSuccess(capabilities)
       }
       SmsAction.CHECK_CALL_PERMISSION -> {
         val hasPermission = callController.checkCallPermission()
-        result.success(hasPermission)
+        safeResultSuccess(hasPermission)
       }
       SmsAction.REQUEST_CALL_PERMISSION -> {
         val success = callController.requestCallPermission()
-        result.success(success)
+        safeResultSuccess(success)
       }
       else -> throw IllegalArgumentException()
     }
@@ -615,8 +617,22 @@ class SmsMethodCallHandler(
     }
   }
 
+  private fun safeResultSuccess(value: Any?) {
+    if (!isResultSubmitted) {
+      result.success(value)
+      isResultSubmitted = true
+    }
+  }
+
+  private fun safeResultError(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+    if (!isResultSubmitted) {
+      result.error(errorCode, errorMessage, errorDetails)
+      isResultSubmitted = true
+    }
+  }
+
   private fun onPermissionDenied(deniedPermissions: List<String>) {
-    result.error(PERMISSION_DENIED, PERMISSION_DENIED_MESSAGE, deniedPermissions)
+    safeResultError(PERMISSION_DENIED, PERMISSION_DENIED_MESSAGE, deniedPermissions)
   }
 
   fun setForegroundChannel(channel: MethodChannel) {
