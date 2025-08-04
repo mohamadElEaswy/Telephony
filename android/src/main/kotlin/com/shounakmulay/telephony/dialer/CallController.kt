@@ -38,10 +38,8 @@ class CallController(private val context: Context) {
     
     fun endCall(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
-            // For now, we'll return true as the actual call ending is managed by the system
             Log.d(TAG, "End call requested")
-            true
+            CallBridge.endCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to end call", e)
             false
@@ -50,9 +48,8 @@ class CallController(private val context: Context) {
     
     fun answerCall(): Boolean {
         return try {
-            // This would typically be handled by the InCallService
             Log.d(TAG, "Answer call requested")
-            true
+            CallBridge.answerCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to answer call", e)
             false
@@ -61,9 +58,8 @@ class CallController(private val context: Context) {
     
     fun rejectCall(): Boolean {
         return try {
-            // This would typically be handled by the InCallService
             Log.d(TAG, "Reject call requested")
-            true
+            CallBridge.rejectCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reject call", e)
             false
@@ -72,9 +68,8 @@ class CallController(private val context: Context) {
     
     fun holdCall(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
             Log.d(TAG, "Hold call requested")
-            true
+            CallBridge.holdCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to hold call", e)
             false
@@ -83,9 +78,8 @@ class CallController(private val context: Context) {
     
     fun unholdCall(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
             Log.d(TAG, "Unhold call requested")
-            true
+            CallBridge.unholdCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to unhold call", e)
             false
@@ -94,9 +88,8 @@ class CallController(private val context: Context) {
     
     fun muteCall(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
             Log.d(TAG, "Mute call requested")
-            true
+            CallBridge.muteCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to mute call", e)
             false
@@ -105,9 +98,8 @@ class CallController(private val context: Context) {
     
     fun unmuteCall(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
             Log.d(TAG, "Unmute call requested")
-            true
+            CallBridge.unmuteCall()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to unmute call", e)
             false
@@ -116,15 +108,22 @@ class CallController(private val context: Context) {
     
     fun getCallAudioState(): Map<String, Any> {
         return try {
-            // This would typically get the current call audio state
-            mapOf(
-                "isMuted" to false,
-                "route" to 0, // 0=earpiece, 1=speaker, 2=bluetooth
-                "supportedRoutes" to listOf(0, 1, 2)
-            )
+            // Get current call info from CallBridge
+            val callInfo = CallBridge.getCurrentCallInfo()
+            if (callInfo != null) {
+                mapOf(
+                    "hasActiveCall" to true,
+                    "phoneNumber" to (callInfo["phoneNumber"] ?: ""),
+                    "state" to (callInfo["state"] ?: ""),
+                    "canMute" to (callInfo["canMute"] ?: false),
+                    "canHold" to (callInfo["canHold"] ?: false)
+                )
+            } else {
+                mapOf("hasActiveCall" to false)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get call audio state", e)
-            emptyMap()
+            mapOf("hasActiveCall" to false)
         }
     }
     
@@ -227,6 +226,30 @@ class CallController(private val context: Context) {
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request call permission", e)
+            false
+        }
+    }
+    
+    /**
+     * Get current call information
+     */
+    fun getCurrentCallInfo(): Map<String, Any>? {
+        return try {
+            CallBridge.getCurrentCallInfo()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get current call info", e)
+            null
+        }
+    }
+    
+    /**
+     * Check if there's an active call
+     */
+    fun hasActiveCall(): Boolean {
+        return try {
+            CallBridge.hasActiveCall()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to check active call", e)
             false
         }
     }

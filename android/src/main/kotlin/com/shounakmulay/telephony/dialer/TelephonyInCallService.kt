@@ -32,11 +32,13 @@ class TelephonyInCallService : InCallService() {
     override fun onCreate() {
         super.onCreate()
         registerCallActionReceiver()
+        CallBridge.registerInCallService(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(callActionReceiver)
+        CallBridge.unregisterInCallService()
     }
 
     private fun registerCallActionReceiver() {
@@ -45,11 +47,11 @@ class TelephonyInCallService : InCallService() {
                 when (intent?.action) {
                     ACTION_ANSWER_CALL -> {
                         Log.d(TAG, "Answer call action received")
-                        currentCall?.answer(VideoProfile.STATE_AUDIO_ONLY)
+                        CallBridge.answerCall()
                     }
                     ACTION_REJECT_CALL -> {
                         Log.d(TAG, "Reject call action received")
-                        currentCall?.reject(false, null)
+                        CallBridge.rejectCall()
                     }
                 }
             }
@@ -98,6 +100,8 @@ class TelephonyInCallService : InCallService() {
 
     private fun handleCallAdded(call: Call) {
         currentCall = call
+        CallBridge.setCurrentCall(call)
+        
         when (call.state) {
             Call.STATE_RINGING -> {
                 Log.d(TAG, "Incoming call detected")
@@ -109,6 +113,7 @@ class TelephonyInCallService : InCallService() {
             }
             Call.STATE_ACTIVE -> {
                 Log.d(TAG, "Call is active")
+                removeCallNotification()
                 // Handle active call UI
             }
             Call.STATE_HOLDING -> {
@@ -117,9 +122,23 @@ class TelephonyInCallService : InCallService() {
             }
             Call.STATE_DISCONNECTED -> {
                 Log.d(TAG, "Call is disconnected")
+                removeCallNotification()
                 // Handle call disconnect
             }
         }
+        
+        // Register callback for call state changes
+        call.registerCallback(object : Call.Callback() {
+            override fun onStateChanged(call: Call, state: Int) {
+                super.onStateChanged(call, state)
+                CallBridge.setCurrentCall(call)
+                
+                when (state) {
+                    Call.STATE_ACTIVE -> removeCallNotification()
+                    Call.STATE_DISCONNECTED -> removeCallNotification()
+                }
+            }
+        })
     }
 
     private fun handleCallRemoved(call: Call) {
@@ -127,6 +146,7 @@ class TelephonyInCallService : InCallService() {
         // Remove any notifications or UI elements for this call
         removeCallNotification()
         currentCall = null
+        CallBridge.setCurrentCall(null)
     }
 
     private fun showIncomingCallNotification(call: Call) {

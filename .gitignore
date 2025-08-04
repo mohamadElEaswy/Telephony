@@ -115,3 +115,4 @@ example/android/app/src/debug/gen/**
 example/ios/**
 
 local.properties
+call_bridge_example.dart
