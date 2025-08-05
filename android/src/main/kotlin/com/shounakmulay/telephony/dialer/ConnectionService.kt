@@ -1,5 +1,6 @@
 package com.shounakmulay.telephony.dialer
 
+import android.content.Context
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -24,10 +25,10 @@ class TelephonyConnectionService : ConnectionService() {
             return null
         }
         
-        val connection = TelephonyConnection()
-        connection.connectionCapabilities = Connection.CAPABILITY_MUTE or 
+        val connection = TelephonyConnection(this)
+        connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE or 
                                           Connection.CAPABILITY_HOLD or
-                                          Connection.CAPABILITY_SUPPORT_HOLD
+                                          Connection.CAPABILITY_SUPPORT_HOLD)
         
         val address = request.address
         if (address != null) {
@@ -49,10 +50,10 @@ class TelephonyConnectionService : ConnectionService() {
             return null
         }
         
-        val connection = TelephonyConnection()
-        connection.connectionCapabilities = Connection.CAPABILITY_MUTE or 
+        val connection = TelephonyConnection(this)
+        connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE or 
                                           Connection.CAPABILITY_HOLD or
-                                          Connection.CAPABILITY_SUPPORT_HOLD
+                                          Connection.CAPABILITY_SUPPORT_HOLD)
         
         val address = request.address
         if (address != null) {

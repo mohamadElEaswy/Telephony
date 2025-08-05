@@ -34,6 +34,7 @@ object Constants {
   const val CALL_MANAGEMENT_REQUEST_CODE = 91
   const val CALL_NOTIFICATION_REQUEST_CODE = 92
   const val CALL_CAPABILITIES_REQUEST_CODE = 93
+  const val INTENT_HANDLING_REQUEST_CODE = 94
 
   // Methods
   const val ON_MESSAGE = "onMessage"

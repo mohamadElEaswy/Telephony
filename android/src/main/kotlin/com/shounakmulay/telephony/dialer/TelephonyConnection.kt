@@ -1,10 +1,11 @@
 package com.shounakmulay.telephony.dialer
 
+import android.content.Context
 import android.telecom.Connection
 import android.telecom.DisconnectCause
 import android.util.Log
 
-class TelephonyConnection : Connection() {
+class TelephonyConnection(private val context: Context? = null) : Connection() {
 
     companion object {
         private const val TAG = "TelephonyConnection"
@@ -45,6 +46,10 @@ class TelephonyConnection : Connection() {
     override fun onShowIncomingCallUi() {
         Log.d(TAG, "onShowIncomingCallUi")
         super.onShowIncomingCallUi()
+        
+        // The InCallService will handle showing the incoming call UI
+        // This method is called when the system wants to show incoming call UI
+        Log.d(TAG, "System requested to show incoming call UI")
     }
 
     override fun onSilence() {

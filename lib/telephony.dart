@@ -38,6 +38,21 @@ void _flutterSmsSetupBackgroundChannel(
   backgroundChannel.invokeMethod<void>(BACKGROUND_SERVICE_INITIALIZED);
 }
 
+/*
+@pragma('vm:entry-point')
+void callMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // This function will be called from Android when onShowIncomingCallUi is triggered
+  print('callMain entry point called from Android');
+
+  // You can add your custom logic here to show the incoming call UI
+  // For example, you could use a global navigator key or event bus to trigger UI changes
+
+  // Example: Show a notification or trigger navigation
+  // _showIncomingCallNotification();
+}
+*/
 ///
 /// A Flutter plugin to use telephony features such as
 /// - Send SMS Messages

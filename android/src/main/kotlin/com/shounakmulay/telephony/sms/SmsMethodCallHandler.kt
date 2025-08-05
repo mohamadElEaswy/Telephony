@@ -57,6 +57,7 @@ import io.flutter.plugin.common.PluginRegistry
 import com.shounakmulay.telephony.utils.Constants.CALL_MANAGEMENT_REQUEST_CODE
 import com.shounakmulay.telephony.utils.Constants.CALL_NOTIFICATION_REQUEST_CODE
 import com.shounakmulay.telephony.utils.Constants.CALL_CAPABILITIES_REQUEST_CODE
+import com.shounakmulay.telephony.utils.Constants.INTENT_HANDLING_REQUEST_CODE
 
 
 class SmsMethodCallHandler(
@@ -204,6 +205,7 @@ class SmsMethodCallHandler(
       ActionType.CALL_MANAGEMENT -> handleMethod(action, CALL_MANAGEMENT_REQUEST_CODE)
       ActionType.CALL_NOTIFICATION -> handleMethod(action, CALL_NOTIFICATION_REQUEST_CODE)
       ActionType.CALL_CAPABILITIES -> handleMethod(action, CALL_CAPABILITIES_REQUEST_CODE)
+      ActionType.INTENT_HANDLING -> handleMethod(action, INTENT_HANDLING_REQUEST_CODE)
     }
   }
 
@@ -232,6 +234,7 @@ class SmsMethodCallHandler(
         ActionType.CALL_MANAGEMENT -> handleCallManagementActions(smsAction)
         ActionType.CALL_NOTIFICATION -> handleCallNotificationActions(smsAction)
         ActionType.CALL_CAPABILITIES -> handleCallCapabilitiesActions(smsAction)
+        ActionType.INTENT_HANDLING -> handleIntentActions(smsAction)
       }
     } catch (e: IllegalArgumentException) {
       safeResultError(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
@@ -429,6 +432,7 @@ class SmsMethodCallHandler(
       SmsAction.GET_CALL_CAPABILITIES,
       SmsAction.CHECK_CALL_PERMISSION,
       SmsAction.REQUEST_CALL_PERMISSION,
+      SmsAction.GET_INITIAL_INTENT,
       SmsAction.NO_SUCH_METHOD -> return true
     }
     return true
@@ -633,6 +637,40 @@ class SmsMethodCallHandler(
 
   private fun onPermissionDenied(deniedPermissions: List<String>) {
     safeResultError(PERMISSION_DENIED, PERMISSION_DENIED_MESSAGE, deniedPermissions)
+  }
+
+  private fun handleIntentActions(smsAction: SmsAction) {
+    when (smsAction) {
+      SmsAction.GET_INITIAL_INTENT -> {
+        val intentData = getInitialIntentData()
+        safeResultSuccess(intentData)
+      }
+      else -> throw IllegalArgumentException()
+    }
+  }
+
+  private fun getInitialIntentData(): Map<String, Any>? {
+    return try {
+      if (::activity.isInitialized) {
+        val intent = activity.intent
+        if (intent != null && intent.hasExtra("call_action")) {
+          // Extract call data from intent
+          mapOf(
+            "call_action" to (intent.getStringExtra("call_action") ?: ""),
+            "phone_number" to (intent.getStringExtra("phone_number") ?: ""),
+            "call_id" to (intent.getStringExtra("call_id") ?: ""),
+            "timestamp" to intent.getLongExtra("timestamp", 0L),
+            "route" to (intent.getStringExtra("route") ?: "")
+          )
+        } else {
+          null
+        }
+      } else {
+        null
+      }
+    } catch (e: Exception) {
+      null
+    }
   }
 
   fun setForegroundChannel(channel: MethodChannel) {

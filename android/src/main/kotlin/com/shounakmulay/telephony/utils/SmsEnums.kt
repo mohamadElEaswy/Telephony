@@ -65,6 +65,9 @@ enum class SmsAction(private val methodName: String) {
   CHECK_CALL_PERMISSION("checkCallPermission"),
   REQUEST_CALL_PERMISSION("requestCallPermission"),
   
+  // Intent handling
+  GET_INITIAL_INTENT("getInitialIntent"),
+  
   NO_SUCH_METHOD("noSuchMethod");
 
   companion object {
@@ -135,13 +138,14 @@ enum class SmsAction(private val methodName: String) {
       GET_CALL_CAPABILITIES,
       CHECK_CALL_PERMISSION,
       REQUEST_CALL_PERMISSION -> ActionType.CALL_CAPABILITIES
+      GET_INITIAL_INTENT -> ActionType.INTENT_HANDLING
     }
   }
 }
 
 enum class ActionType {
   GET_SMS, SEND_SMS, BACKGROUND, GET, PERMISSION, CALL, DIALER, PHONE_ACCOUNT, 
-  CALL_MANAGEMENT, CALL_NOTIFICATION, CALL_CAPABILITIES
+  CALL_MANAGEMENT, CALL_NOTIFICATION, CALL_CAPABILITIES, INTENT_HANDLING
 }
 
 enum class ContentUri(val uri: Uri) {

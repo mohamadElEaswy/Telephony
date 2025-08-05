@@ -56,6 +56,8 @@ class TelephonyInCallService : InCallService() {
                         val success = CallBridge.answerCall()
                         if (success) {
                             removeCallNotification()
+                            // Open the app after answering
+                            openAppForCall(phoneNumber, callId, "answered")
                         }
                         Log.d(TAG, "Answer call result: $success")
                     }
@@ -288,5 +290,71 @@ class TelephonyInCallService : InCallService() {
             intent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
+    }
+
+    /**
+     * Opens the app when a call action is performed
+     */
+    private fun openAppForCall(phoneNumber: String?, callId: String?, action: String) {
+        try {
+            // Get the main activity class name from the application context
+            val packageManager = packageManager
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            
+            if (launchIntent != null) {
+                // Create intent to open your app's main activity
+                val intent = Intent(launchIntent).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                           Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                           Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    
+                    // Pass call information to your app
+                    putExtra("call_action", action)
+                    putExtra("phone_number", phoneNumber)
+                    putExtra("call_id", callId)
+                    putExtra("timestamp", System.currentTimeMillis())
+                    
+                    // Optional: specific route in your Flutter app
+                    putExtra("route", "/active-call")
+                }
+                
+                startActivity(intent)
+                Log.d(TAG, "Opened app for call action: $action, phone: $phoneNumber")
+                
+            } else {
+                Log.e(TAG, "Could not find launch intent for package: $packageName")
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open app for call", e)
+        }
+    }
+
+    /**
+     * Alternative method: Open a specific activity (if you have a dedicated call activity)
+     */
+    private fun openCallActivity(phoneNumber: String?, callId: String?, action: String) {
+        try {
+            // If you have a specific call activity, use this approach
+            val intent = Intent().apply {
+                // Replace with your actual call activity class
+                setClassName(packageName, "$packageName.CallActivity")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                       Intent.FLAG_ACTIVITY_CLEAR_TOP
+                
+                putExtra("call_action", action)
+                putExtra("phone_number", phoneNumber)
+                putExtra("call_id", callId)
+                putExtra("timestamp", System.currentTimeMillis())
+            }
+            
+            startActivity(intent)
+            Log.d(TAG, "Opened call activity for action: $action")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open call activity", e)
+            // Fallback to main app
+            openAppForCall(phoneNumber, callId, action)
+        }
     }
 } 

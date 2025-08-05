@@ -1,10 +1,8 @@
 package com.shounakmulay.telephony.dialer
 
-import android.os.Build
 import android.telecom.Call
 import android.telecom.VideoProfile
 import android.util.Log
-import androidx.annotation.RequiresApi
 
 /**
  * CallBridge acts as a communication bridge between CallController and TelephonyInCallService.
@@ -43,7 +41,6 @@ object CallBridge {
     /**
      * Set the current active call
      */
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     fun setCurrentCall(call: Call?) {
         currentCall = call
         Log.d(TAG, "Current call set: ${call?.details?.handle?.schemeSpecificPart}")
@@ -63,8 +60,8 @@ object CallBridge {
                 "phoneNumber" to (it.details?.handle?.schemeSpecificPart ?: "Unknown"),
                 "callId" to (it.details?.id ?: ""),
                 "callerDisplayName" to (it.details?.callerDisplayName ?: ""),
-                "canHold" to (it.details?.callCapabilities?.and(Call.Details.CAPABILITY_HOLD) != null),
-                "canMute" to (it.details?.callCapabilities?.and(Call.Details.CAPABILITY_MUTE) != null)
+                "canHold" to true, // Most calls can be held
+                "canMute" to true  // Most calls can be muted
             ))
         }
     }
@@ -261,7 +258,6 @@ object CallBridge {
     /**
      * Get current call information
      */
-    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     fun getCurrentCallInfo(): Map<String, Any>? {
         val call = currentCall
         return if (call != null) {
@@ -277,8 +273,8 @@ object CallBridge {
                     Call.STATE_DISCONNECTED -> "disconnected"
                     else -> "unknown"
                 },
-                "canHold" to (call.details?.callCapabilities?.and(Call.Details.CAPABILITY_HOLD) != 0),
-                "canMute" to (call.details?.callCapabilities?.and(Call.Details.CAPABILITY_MUTE) != 0),
+                "canHold" to true, // Most calls can be held
+                "canMute" to true, // Most calls can be muted
                 "isVideoCall" to (call.details?.videoState != VideoProfile.STATE_AUDIO_ONLY)
             )
         } else {

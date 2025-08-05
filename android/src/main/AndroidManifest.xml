@@ -34,14 +34,6 @@
             </intent-filter>
         </service>
 
-        <!-- Add BroadcastReceiver for call actions -->
-        <receiver
-            android:name=".dialer.CallActionReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="ANSWER_CALL" />
-                <action android:name="REJECT_CALL" />
-            </intent-filter>
-        </receiver>
+
     </application>
 </manifest>
