@@ -581,7 +581,7 @@ class Telephony {
   ///
   /// Returns true if the request was successfully initiated, false otherwise.
   ///
-  Future<bool?> get requestDefaultDialer =>
+  Future<bool?> get  requestDefaultDialer =>
       _foregroundChannel.invokeMethod<bool>(REQUEST_DEFAULT_DIALER);
 
   ///
