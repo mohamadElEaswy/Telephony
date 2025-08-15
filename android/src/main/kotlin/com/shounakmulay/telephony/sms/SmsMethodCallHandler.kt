@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.shounakmulay.telephony.PermissionsController
 import com.shounakmulay.telephony.utils.ActionType
@@ -692,15 +693,24 @@ class SmsMethodCallHandler(
     if (intent != null) {
       when (intent.action) {
         Constants.ACTION_SMS_SENT -> {
-          if (::foregroundChannel.isInitialized) {
-            foregroundChannel.invokeMethod(SMS_SENT, null)
+          try {
+            if (::foregroundChannel.isInitialized) {
+              foregroundChannel.invokeMethod(SMS_SENT, null)
+            }
+          } catch (e: Exception) {
+            Log.e("SmsMethodCallHandler", "Error invoking SMS_SENT", e)
           }
         }
         Constants.ACTION_SMS_DELIVERED -> {
-          if (::foregroundChannel.isInitialized) {
-            foregroundChannel.invokeMethod(SMS_DELIVERED, null)
+          try {
+            if (::foregroundChannel.isInitialized) {
+              foregroundChannel.invokeMethod(SMS_DELIVERED, null)
+            }
+            ctx?.unregisterReceiver(this)
+          } catch (e: Exception) {
+            Log.e("SmsMethodCallHandler", "Error invoking SMS_DELIVERED", e)
+            ctx?.unregisterReceiver(this)
           }
-          context.unregisterReceiver(this)
         }
       }
     }

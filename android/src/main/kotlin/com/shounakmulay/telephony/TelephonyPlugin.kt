@@ -103,9 +103,11 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
       smsChannel.invokeMethod("onCallStateChanged", callInfo)
       
       // Also trigger background call state handler if configured
-      com.shounakmulay.telephony.call.IncomingCallStateHandler.handleCallStateChange(
-        context!!, callInfo
-      )
+      context?.let {
+        com.shounakmulay.telephony.call.IncomingCallStateHandler.handleCallStateChange(
+          it, callInfo
+        )
+      }
     } catch (e: Exception) {
       android.util.Log.w("TelephonyPlugin", "Failed to notify call state change", e)
     }

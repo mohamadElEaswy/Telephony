@@ -9,7 +9,7 @@ import com.shounakmulay.telephony.utils.Constants.HANDLE_BACKGROUND_CALL_STATE
 import com.shounakmulay.telephony.utils.Constants.SHARED_PREFERENCES_NAME
 import com.shounakmulay.telephony.utils.Constants.SHARED_PREFS_BACKGROUND_CALL_HANDLE
 import com.shounakmulay.telephony.utils.Constants.SHARED_PREFS_BACKGROUND_CALL_SETUP_HANDLE
-import com.shounakmulay.telephony.utils.ContextHolder
+import com.shounakmulay.telephony.sms.ContextHolder
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterJNI
