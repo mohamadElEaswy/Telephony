@@ -18,6 +18,11 @@ import io.flutter.plugin.common.*
 
 class TelephonyPlugin : FlutterPlugin, ActivityAware {
 
+  companion object {
+    var instance: TelephonyPlugin? = null
+      private set
+  }
+
   private lateinit var smsChannel: MethodChannel
 
   private lateinit var smsMethodCallHandler: SmsMethodCallHandler
@@ -34,6 +39,7 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
   private lateinit var callController: CallController
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    instance = this
     if (!this::binaryMessenger.isInitialized) {
       binaryMessenger = flutterPluginBinding.binaryMessenger
     }
@@ -43,6 +49,7 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     tearDownPlugin()
+    instance = null
   }
 
   override fun onDetachedFromActivity() {
@@ -79,6 +86,39 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
   private fun tearDownPlugin() {
     IncomingSmsReceiver.foregroundSmsChannel = null
     smsChannel.setMethodCallHandler(null)
+  }
+
+  fun notifyServiceReady() {
+    // Notify Flutter that the telephony service is ready
+    try {
+      smsChannel.invokeMethod("onServiceReady", null)
+    } catch (e: Exception) {
+      android.util.Log.w("TelephonyPlugin", "Failed to notify service ready", e)
+    }
+  }
+
+  fun notifyCallStateChanged(callInfo: Map<String, Any>) {
+    // Notify Flutter about call state changes
+    try {
+      smsChannel.invokeMethod("onCallStateChanged", callInfo)
+      
+      // Also trigger background call state handler if configured
+      com.shounakmulay.telephony.call.IncomingCallStateHandler.handleCallStateChange(
+        context!!, callInfo
+      )
+    } catch (e: Exception) {
+      android.util.Log.w("TelephonyPlugin", "Failed to notify call state change", e)
+    }
+  }
+
+  fun notifyMuteStateChanged(isMuted: Boolean) {
+    // Notify Flutter about mute state changes
+    try {
+      val muteInfo = mapOf("isMuted" to isMuted)
+      smsChannel.invokeMethod("onMuteStateChanged", muteInfo)
+    } catch (e: Exception) {
+      android.util.Log.w("TelephonyPlugin", "Failed to notify mute state change", e)
+    }
   }
 
 }

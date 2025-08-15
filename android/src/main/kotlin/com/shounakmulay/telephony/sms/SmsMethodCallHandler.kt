@@ -15,6 +15,7 @@ import com.shounakmulay.telephony.utils.ActionType
 import com.shounakmulay.telephony.dialer.DialerController
 import com.shounakmulay.telephony.dialer.PhoneAccountController
 import com.shounakmulay.telephony.dialer.CallController
+import com.shounakmulay.telephony.call.IncomingCallStateHandler
 import com.shounakmulay.telephony.utils.Constants
 import com.shounakmulay.telephony.utils.Constants.ADDRESS
 import com.shounakmulay.telephony.utils.Constants.BACKGROUND_HANDLE
@@ -294,6 +295,10 @@ class SmsMethodCallHandler(
         val preferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
         preferences.edit().putBoolean(SHARED_PREFS_DISABLE_BACKGROUND_EXE, true).apply()
       }
+      SmsAction.SETUP_CALL_STATE_BACKGROUND -> {
+        IncomingCallStateHandler.setBackgroundSetupHandle(context, setupHandle)
+        IncomingCallStateHandler.setBackgroundCallStateHandle(context, backgroundHandle)
+      }
       else -> throw IllegalArgumentException()
     }
   }
@@ -376,6 +381,7 @@ class SmsMethodCallHandler(
       SmsAction.START_BACKGROUND_SERVICE,
       SmsAction.BACKGROUND_SERVICE_INITIALIZED,
       SmsAction.DISABLE_BACKGROUND_SERVICE,
+      SmsAction.SETUP_CALL_STATE_BACKGROUND,
       SmsAction.REQUEST_SMS_PERMISSIONS -> {
         val permissions = permissionsController.getSmsPermissions()
         return checkOrRequestPermission(permissions, requestCode)
@@ -432,6 +438,7 @@ class SmsMethodCallHandler(
       SmsAction.GET_CALL_CAPABILITIES,
       SmsAction.CHECK_CALL_PERMISSION,
       SmsAction.REQUEST_CALL_PERMISSION,
+      SmsAction.IS_SERVICE_AVAILABLE,
       SmsAction.GET_INITIAL_INTENT,
       SmsAction.NO_SUCH_METHOD -> return true
     }
@@ -539,6 +546,10 @@ class SmsMethodCallHandler(
       SmsAction.STOP_DTMF_TONE -> {
         val success = callController.stopDtmfTone()
         safeResultSuccess(success)
+      }
+      SmsAction.IS_SERVICE_AVAILABLE -> {
+        val isAvailable = callController.isServiceAvailable()
+        safeResultSuccess(isAvailable)
       }
       else -> throw IllegalArgumentException()
     }
@@ -680,9 +691,15 @@ class SmsMethodCallHandler(
   override fun onReceive(ctx: Context?, intent: Intent?) {
     if (intent != null) {
       when (intent.action) {
-        Constants.ACTION_SMS_SENT -> foregroundChannel.invokeMethod(SMS_SENT, null)
+        Constants.ACTION_SMS_SENT -> {
+          if (::foregroundChannel.isInitialized) {
+            foregroundChannel.invokeMethod(SMS_SENT, null)
+          }
+        }
         Constants.ACTION_SMS_DELIVERED -> {
-          foregroundChannel.invokeMethod(SMS_DELIVERED, null)
+          if (::foregroundChannel.isInitialized) {
+            foregroundChannel.invokeMethod(SMS_DELIVERED, null)
+          }
           context.unregisterReceiver(this)
         }
       }

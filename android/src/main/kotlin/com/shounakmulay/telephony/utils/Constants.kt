@@ -8,6 +8,7 @@ object Constants {
   // Channels
   const val CHANNEL_SMS = "plugins.shounakmulay.com/foreground_sms_channel"
   const val CHANNEL_SMS_BACKGROUND = "plugins.shounakmulay.com/background_sms_channel"
+  const val CHANNEL_CALL_BACKGROUND = "plugins.shounakmulay.com/background_call_channel"
 
   // Intent Actions
   const val ACTION_SMS_SENT = "plugins.shounakmulay.intent.ACTION_SMS_SENT"
@@ -39,6 +40,8 @@ object Constants {
   // Methods
   const val ON_MESSAGE = "onMessage"
   const val HANDLE_BACKGROUND_MESSAGE = "handleBackgroundMessage"
+  const val HANDLE_BACKGROUND_CALL_STATE = "handleBackgroundCallState"
+  const val BACKGROUND_CALL_SERVICE_INITIALIZED = "backgroundCallServiceInitialized"
   const val SMS_SENT = "smsSent"
   const val SMS_DELIVERED = "smsDelivered"
   
@@ -91,6 +94,8 @@ object Constants {
   const val SHARED_PREFERENCES_NAME = "com.shounakmulay.android_telephony_plugin"
   const val SHARED_PREFS_BACKGROUND_SETUP_HANDLE = "background_setup_handle"
   const val SHARED_PREFS_BACKGROUND_MESSAGE_HANDLE = "background_message_handle"
+  const val SHARED_PREFS_BACKGROUND_CALL_SETUP_HANDLE = "background_call_setup_handle"
+  const val SHARED_PREFS_BACKGROUND_CALL_HANDLE = "background_call_handle"
   const val SHARED_PREFS_DISABLE_BACKGROUND_EXE = "disable_background"
 
 }

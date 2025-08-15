@@ -14,6 +14,7 @@ enum class SmsAction(private val methodName: String) {
   START_BACKGROUND_SERVICE("startBackgroundService"),
   DISABLE_BACKGROUND_SERVICE("disableBackgroundService"),
   BACKGROUND_SERVICE_INITIALIZED("backgroundServiceInitialized"),
+  SETUP_CALL_STATE_BACKGROUND("setupCallStateBackground"),
   IS_SMS_CAPABLE("isSmsCapable"),
   GET_CELLULAR_DATA_STATE("getCellularDataState"),
   GET_CALL_STATE("getCallState"),
@@ -54,6 +55,7 @@ enum class SmsAction(private val methodName: String) {
   SET_CALL_AUDIO_ROUTE("setCallAudioRoute"),
   PLAY_DTMF_TONE("playDtmfTone"),
   STOP_DTMF_TONE("stopDtmfTone"),
+  IS_SERVICE_AVAILABLE("isServiceAvailable"),
   
   // Call notification actions
   SHOW_INCOMING_CALL_NOTIFICATION("showIncomingCallNotification"),
@@ -93,7 +95,8 @@ enum class SmsAction(private val methodName: String) {
       NO_SUCH_METHOD -> ActionType.SEND_SMS
       START_BACKGROUND_SERVICE,
       DISABLE_BACKGROUND_SERVICE,
-      BACKGROUND_SERVICE_INITIALIZED -> ActionType.BACKGROUND
+      BACKGROUND_SERVICE_INITIALIZED,
+      SETUP_CALL_STATE_BACKGROUND -> ActionType.BACKGROUND
       IS_SMS_CAPABLE,
       GET_CELLULAR_DATA_STATE,
       GET_CALL_STATE,
@@ -131,7 +134,8 @@ enum class SmsAction(private val methodName: String) {
       GET_CALL_AUDIO_STATE,
       SET_CALL_AUDIO_ROUTE,
       PLAY_DTMF_TONE,
-      STOP_DTMF_TONE -> ActionType.CALL_MANAGEMENT
+      STOP_DTMF_TONE,
+      IS_SERVICE_AVAILABLE -> ActionType.CALL_MANAGEMENT
       SHOW_INCOMING_CALL_NOTIFICATION,
       HIDE_INCOMING_CALL_NOTIFICATION,
       SET_CALL_NOTIFICATION_CHANNEL -> ActionType.CALL_NOTIFICATION

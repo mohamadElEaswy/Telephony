@@ -2,18 +2,22 @@ package com.shounakmulay.telephony.dialer
 
 import android.Manifest
 import android.content.Context
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
 import android.telecom.TelecomManager
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
+import com.shounakmulay.telephony.TelephonyConnectionService
 
 class CallController(private val context: Context) {
-    
     companion object {
         private const val TAG = "CallController"
     }
+    
+    private var toneGenerator: ToneGenerator? = null
     
     private val telecomManager: TelecomManager by lazy {
         context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
@@ -108,18 +112,44 @@ class CallController(private val context: Context) {
     
     fun getCallAudioState(): Map<String, Any> {
         return try {
-            // Get current call info from CallBridge
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             val callInfo = CallBridge.getCurrentCallInfo()
+            
+            // Determine current audio route
+            val currentRoute = when {
+                audioManager.isBluetoothScoOn -> 2 // Bluetooth
+                audioManager.isSpeakerphoneOn -> 1 // Speaker
+                else -> 0 // Earpiece
+            }
+            
+            // Get available audio routes
+            val availableRoutes = mutableListOf<Int>()
+            availableRoutes.add(0) // Earpiece always available
+            availableRoutes.add(1) // Speaker always available
+            
+            // Check if Bluetooth is available
+            if (audioManager.isBluetoothA2dpOn || audioManager.isBluetoothScoAvailableOffCall) {
+                availableRoutes.add(2) // Bluetooth
+            }
+            
             if (callInfo != null) {
                 mapOf(
                     "hasActiveCall" to true,
                     "phoneNumber" to (callInfo["phoneNumber"] ?: ""),
                     "state" to (callInfo["state"] ?: ""),
                     "canMute" to (callInfo["canMute"] ?: false),
-                    "canHold" to (callInfo["canHold"] ?: false)
+                    "canHold" to (callInfo["canHold"] ?: false),
+                    "currentAudioRoute" to currentRoute,
+                    "availableAudioRoutes" to availableRoutes,
+                    "isMuted" to (callInfo["isMuted"] ?: false),
+                    "isOnHold" to (callInfo["isOnHold"] ?: false)
                 )
             } else {
-                mapOf("hasActiveCall" to false)
+                mapOf(
+                    "hasActiveCall" to false,
+                    "currentAudioRoute" to currentRoute,
+                    "availableAudioRoutes" to availableRoutes
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get call audio state", e)
@@ -129,8 +159,30 @@ class CallController(private val context: Context) {
     
     fun setCallAudioRoute(route: Int): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
-            Log.d(TAG, "Set call audio route to: $route")
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            
+            when (route) {
+                0 -> { // Earpiece
+                    audioManager.isSpeakerphoneOn = false
+                    audioManager.isBluetoothScoOn = false
+                    Log.d(TAG, "Set call audio route to earpiece")
+                }
+                1 -> { // Speaker
+                    audioManager.isSpeakerphoneOn = true
+                    audioManager.isBluetoothScoOn = false
+                    Log.d(TAG, "Set call audio route to speaker")
+                }
+                2 -> { // Bluetooth
+                    audioManager.isSpeakerphoneOn = false
+                    audioManager.isBluetoothScoOn = true
+                    audioManager.startBluetoothSco()
+                    Log.d(TAG, "Set call audio route to bluetooth")
+                }
+                else -> {
+                    Log.w(TAG, "Unknown audio route: $route")
+                    return false
+                }
+            }
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set call audio route", e)
@@ -140,8 +192,34 @@ class CallController(private val context: Context) {
     
     fun playDtmfTone(tone: String): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
-            Log.d(TAG, "Play DTMF tone: $tone")
+            // Initialize ToneGenerator if not already done
+            if (toneGenerator == null) {
+                toneGenerator = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 80)
+            }
+            
+            // Map tone character to ToneGenerator tone
+            val toneType = when (tone) {
+                "0" -> ToneGenerator.TONE_DTMF_0
+                "1" -> ToneGenerator.TONE_DTMF_1
+                "2" -> ToneGenerator.TONE_DTMF_2
+                "3" -> ToneGenerator.TONE_DTMF_3
+                "4" -> ToneGenerator.TONE_DTMF_4
+                "5" -> ToneGenerator.TONE_DTMF_5
+                "6" -> ToneGenerator.TONE_DTMF_6
+                "7" -> ToneGenerator.TONE_DTMF_7
+                "8" -> ToneGenerator.TONE_DTMF_8
+                "9" -> ToneGenerator.TONE_DTMF_9
+                "*" -> ToneGenerator.TONE_DTMF_S
+                "#" -> ToneGenerator.TONE_DTMF_P
+                else -> {
+                    Log.w(TAG, "Invalid DTMF tone: $tone")
+                    return false
+                }
+            }
+            
+            // Play the tone for 200ms
+            toneGenerator?.startTone(toneType, 200)
+            Log.d(TAG, "Playing DTMF tone: $tone")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to play DTMF tone", e)
@@ -151,12 +229,22 @@ class CallController(private val context: Context) {
     
     fun stopDtmfTone(): Boolean {
         return try {
-            // This would typically be handled by the ConnectionService
-            Log.d(TAG, "Stop DTMF tone")
+            toneGenerator?.stopTone()
+            Log.d(TAG, "Stopped DTMF tone")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to stop DTMF tone", e)
             false
+        }
+    }
+    
+    fun cleanup() {
+        try {
+            toneGenerator?.release()
+            toneGenerator = null
+            Log.d(TAG, "CallController cleanup completed")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error during CallController cleanup", e)
         }
     }
     
@@ -253,4 +341,16 @@ class CallController(private val context: Context) {
             false
         }
     }
-} 
+    
+    /**
+     * Check if the telephony connection service is available
+     */
+    fun isServiceAvailable(): Boolean {
+        return try {
+            TelephonyConnectionService.isServiceAvailable()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to check service availability", e)
+            false
+        }
+    }
+}

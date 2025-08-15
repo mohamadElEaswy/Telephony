@@ -1,8 +1,11 @@
 package com.shounakmulay.telephony.dialer
 
+import android.content.Context
 import android.telecom.Call
+import android.telecom.TelecomManager
 import android.telecom.VideoProfile
 import android.util.Log
+import kotlinx.coroutines.*
 
 /**
  * CallBridge acts as a communication bridge between CallController and TelephonyInCallService.
@@ -212,7 +215,7 @@ object CallBridge {
         return try {
             val call = currentCall
             if (call != null) {
-                // TODO: Implement proper audio muting through AudioManager
+                inCallService?.setMuted(true)
                 Log.d(TAG, "Call mute requested: ${call.details?.handle?.schemeSpecificPart}")
                 notifyCallStateChanged("callAction", "muted", mapOf(
                     "phoneNumber" to (call.details?.handle?.schemeSpecificPart ?: "Unknown"),
@@ -238,7 +241,7 @@ object CallBridge {
         return try {
             val call = currentCall
             if (call != null) {
-                // TODO: Implement proper audio unmuting through AudioManager
+                inCallService?.setMuted(false)
                 Log.d(TAG, "Call unmute requested: ${call.details?.handle?.schemeSpecificPart}")
                 notifyCallStateChanged("callAction", "unmuted", mapOf(
                     "phoneNumber" to (call.details?.handle?.schemeSpecificPart ?: "Unknown"),

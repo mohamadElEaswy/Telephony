@@ -2,9 +2,12 @@ part of 'telephony.dart';
 
 const _FOREGROUND_CHANNEL = 'plugins.shounakmulay.com/foreground_sms_channel';
 const _BACKGROUND_CHANNEL = 'plugins.shounakmulay.com/background_sms_channel';
+const _BACKGROUND_CALL_CHANNEL = 'plugins.shounakmulay.com/background_call_channel';
 
 const HANDLE_BACKGROUND_MESSAGE = "handleBackgroundMessage";
 const BACKGROUND_SERVICE_INITIALIZED = "backgroundServiceInitialized";
+const HANDLE_BACKGROUND_CALL_STATE = "handleBackgroundCallState";
+const BACKGROUND_CALL_SERVICE_INITIALIZED = "backgroundCallServiceInitialized";
 const GET_ALL_INBOX_SMS = "getAllInboxSms";
 const GET_ALL_SENT_SMS = "getAllSentSms";
 const GET_ALL_DRAFT_SMS = "getAllDraftSms";
@@ -62,10 +65,16 @@ const SET_CALL_NOTIFICATION_CHANNEL = "setCallNotificationChannel";
 const GET_CALL_CAPABILITIES = "getCallCapabilities";
 const CHECK_CALL_PERMISSION = "checkCallPermission";
 const REQUEST_CALL_PERMISSION = "requestCallPermission";
+const IS_SERVICE_AVAILABLE = "isServiceAvailable";
 
 const ON_MESSAGE = "onMessage";
 const SMS_SENT = "smsSent";
 const SMS_DELIVERED = "smsDelivered";
+
+// Call state change events
+const ON_CALL_STATE_CHANGED = "onCallStateChanged";
+const ON_MUTE_STATE_CHANGED = "onMuteStateChanged";
+const ON_NEW_CALL_STATE = "onNewCallState";
 
 ///
 /// Possible parameters that can be fetched during a SMS query operation.

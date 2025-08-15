@@ -11,6 +11,8 @@ part 'filter.dart';
 
 typedef MessageHandler(SmsMessage message);
 typedef SmsSendStatusListener(SendStatus status);
+typedef CallStateChangeHandler(Map<String, dynamic> callInfo);
+typedef MuteStateChangeHandler(bool isMuted);
 
 @pragma('vm:entry-point')
 void _flutterSmsSetupBackgroundChannel(
@@ -36,6 +38,32 @@ void _flutterSmsSetupBackgroundChannel(
   });
 
   backgroundChannel.invokeMethod<void>(BACKGROUND_SERVICE_INITIALIZED);
+}
+
+@pragma('vm:entry-point')
+void _flutterCallStateSetupBackgroundChannel(
+    {MethodChannel backgroundChannel =
+        const MethodChannel(_BACKGROUND_CALL_CHANNEL)}) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  backgroundChannel.setMethodCallHandler((call) async {
+    if (call.method == HANDLE_BACKGROUND_CALL_STATE) {
+      final CallbackHandle handle =
+          CallbackHandle.fromRawHandle(call.arguments['handle']);
+      final Function handlerFunction =
+          PluginUtilities.getCallbackFromHandle(handle)!;
+      try {
+        final callInfo = Map<String, dynamic>.from(call.arguments['callInfo']);
+        await handlerFunction(callInfo);
+      } catch (e) {
+        print('Unable to handle background call state change.');
+        print(e);
+      }
+      return Future<void>.value();
+    }
+  });
+
+  backgroundChannel.invokeMethod<void>(BACKGROUND_CALL_SERVICE_INITIALIZED);
 }
 
 /*
@@ -71,6 +99,9 @@ class Telephony {
   late MessageHandler _onNewMessage;
   late MessageHandler _onBackgroundMessages;
   late SmsSendStatusListener _statusListener;
+  CallStateChangeHandler? _onCallStateChanged;
+  CallStateChangeHandler? _onBackgroundCallStateChanged;
+  MuteStateChangeHandler? _onMuteStateChanged;
 
   ///
   /// Gets a singleton instance of the [Telephony] class.
@@ -165,6 +196,24 @@ class Telephony {
         return _statusListener(SendStatus.SENT);
       case SMS_DELIVERED:
         return _statusListener(SendStatus.DELIVERED);
+      case ON_CALL_STATE_CHANGED:
+        if (_onCallStateChanged != null) {
+          final callInfo = Map<String, dynamic>.from(call.arguments);
+          return _onCallStateChanged!(callInfo);
+        }
+        break;
+      case ON_NEW_CALL_STATE:
+        if (_onCallStateChanged != null) {
+          final callInfo = Map<String, dynamic>.from(call.arguments);
+          return _onCallStateChanged!(callInfo);
+        }
+        break;
+      case ON_MUTE_STATE_CHANGED:
+        if (_onMuteStateChanged != null) {
+          final isMuted = call.arguments["isMuted"] as bool;
+          return _onMuteStateChanged!(isMuted);
+        }
+        break;
     }
   }
 
@@ -876,6 +925,84 @@ class Telephony {
   ///
   Future<bool?> requestCallPermission() async {
     return _foregroundChannel.invokeMethod<bool>(REQUEST_CALL_PERMISSION);
+  }
+
+  ///
+  /// Check if the telephony connection service is available.
+  ///
+  /// Returns true if the service is available, false otherwise.
+  ///
+  Future<bool?> isServiceAvailable() async {
+    return _foregroundChannel.invokeMethod<bool>(IS_SERVICE_AVAILABLE);
+  }
+
+  ///
+  /// Listen to call state changes.
+  ///
+  /// Parameters:
+  ///
+  /// - [onNewCallState] : Called on every call state change when app is in foreground.
+  /// - [onBackgroundCallState] (optional) : Called on every call state change when app is in background.
+  /// - [listenInBackground] (optional) : Defaults to true. Set to false to only listen to call state changes in foreground. [listenInBackground] is
+  /// ignored if [onBackgroundCallState] is not set.
+  ///
+  void listenCallStateChanges({
+    required CallStateChangeHandler onNewCallState,
+    CallStateChangeHandler? onBackgroundCallState,
+    bool listenInBackground = true,
+  }) {
+    assert(_platform.isAndroid == true, "Can only be called on Android.");
+    assert(
+        listenInBackground
+            ? onBackgroundCallState != null
+            : onBackgroundCallState == null,
+        listenInBackground
+            ? "`onBackgroundCallState` cannot be null when `listenInBackground` is true. Set `listenInBackground` to false if you don't need background processing."
+            : "You have set `listenInBackground` to false. `onBackgroundCallState` can only be set when `listenInBackground` is true");
+
+    _onCallStateChanged = onNewCallState;
+
+    if (listenInBackground && onBackgroundCallState != null) {
+      _onBackgroundCallStateChanged = onBackgroundCallState;
+      final CallbackHandle backgroundSetupHandle =
+          PluginUtilities.getCallbackHandle(_flutterCallStateSetupBackgroundChannel)!;
+      final CallbackHandle backgroundMessageHandle =
+          PluginUtilities.getCallbackHandle(_onBackgroundCallStateChanged!)!;
+
+      _foregroundChannel.invokeMethod("setupCallStateBackground", <String, dynamic>{
+        "setupHandle": backgroundSetupHandle.toRawHandle(),
+        "backgroundHandle": backgroundMessageHandle.toRawHandle(),
+        "listenInBackground": listenInBackground
+      });
+    }
+  }
+
+  ///
+  /// Listen to mute state changes.
+  ///
+  /// Parameters:
+  ///
+  /// - [onMuteStateChanged] : Called when call mute state changes
+  ///
+  void listenMuteStateChanges({
+    required MuteStateChangeHandler onMuteStateChanged,
+  }) {
+    assert(_platform.isAndroid == true, "Can only be called on Android.");
+    _onMuteStateChanged = onMuteStateChanged;
+  }
+
+  ///
+  /// Stop listening to call state changes.
+  ///
+  void stopListeningCallStateChanges() {
+    _onCallStateChanged = null;
+  }
+
+  ///
+  /// Stop listening to mute state changes.
+  ///
+  void stopListeningMuteStateChanges() {
+    _onMuteStateChanged = null;
   }
 }
 
