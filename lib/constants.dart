@@ -215,7 +215,7 @@ enum SmsStatus { STATUS_COMPLETE, STATUS_FAILED, STATUS_NONE, STATUS_PENDING }
 enum DataState { DISCONNECTED, CONNECTING, CONNECTED, SUSPENDED, UNKNOWN }
 
 /// Represents state of cellular calls.
-enum CallState { IDLE, RINGING, OFFHOOK, UNKNOWN }
+enum CallState { Idle, Ringing, Offhook, Active, Holding, Disconnected, Unknown }
 
 /// Represents state of cellular network data activity.
 enum DataActivity { NONE, IN, OUT, INOUT, DORMANT, UNKNOWN }

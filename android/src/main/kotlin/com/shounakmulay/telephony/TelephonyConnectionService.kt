@@ -407,14 +407,14 @@ class TelephonyConnectionService : ConnectionService() {
     
     private fun getCallStateIndex(state: Int): Int {
         return when (state) {
-            Connection.STATE_INITIALIZING -> 0 // idle
-            Connection.STATE_NEW -> 0 // idle
-            Connection.STATE_RINGING -> 1 // ringing
-            Connection.STATE_DIALING -> 2 // offhook
-            Connection.STATE_ACTIVE -> 3 // active
-            Connection.STATE_HOLDING -> 4 // holding
-            Connection.STATE_DISCONNECTED -> 5 // disconnected
-            else -> 0 // idle
+            Connection.STATE_INITIALIZING -> 0 // Idle
+            Connection.STATE_NEW -> 0 // Idle
+            Connection.STATE_RINGING -> 1 // Ringing
+            Connection.STATE_DIALING -> 2 // Offhook
+            Connection.STATE_ACTIVE -> 3 // Active
+            Connection.STATE_HOLDING -> 4 // Holding
+            Connection.STATE_DISCONNECTED -> 5 // Disconnected
+            else -> 6 // Unknown
         }
     }
 }
@@ -524,14 +524,14 @@ class TelephonyConnection(
     
     private fun getCallStateIndex(state: Int): Int {
         return when (state) {
-            STATE_INITIALIZING -> 0 // idle
-            STATE_NEW -> 0 // idle
-            STATE_RINGING -> 1 // ringing
-            STATE_DIALING -> 2 // offhook
-            STATE_ACTIVE -> 3 // active
-            STATE_HOLDING -> 4 // holding
-            STATE_DISCONNECTED -> 5 // disconnected
-            else -> 0 // idle
+            STATE_INITIALIZING -> 0 // Idle
+            STATE_NEW -> 0 // Idle
+            STATE_RINGING -> 1 // Ringing
+            STATE_DIALING -> 2 // Offhook
+            STATE_ACTIVE -> 3 // Active
+            STATE_HOLDING -> 4 // Holding
+            STATE_DISCONNECTED -> 5 // Disconnected
+            else -> 6 // Unknown
         }
     }
 }

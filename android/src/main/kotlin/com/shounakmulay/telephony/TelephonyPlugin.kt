@@ -37,6 +37,7 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
 
   private lateinit var phoneAccountController: PhoneAccountController
   private lateinit var callController: CallController
+  private var context: Context? = null
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     instance = this
@@ -71,6 +72,7 @@ class TelephonyPlugin : FlutterPlugin, ActivityAware {
   }
 
   private fun setupPlugin(context: Context, messenger: BinaryMessenger) {
+    this.context = context
     smsController = SmsController(context)
     permissionsController = PermissionsController(context)
     dialerController = DialerController(context)

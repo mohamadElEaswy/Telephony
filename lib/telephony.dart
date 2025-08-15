@@ -445,7 +445,7 @@ class Telephony {
     if (state != null) {
       return CallState.values[state];
     } else {
-      return CallState.UNKNOWN;
+      return CallState.Unknown;
     }
   }
 
