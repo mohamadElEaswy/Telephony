@@ -225,6 +225,141 @@ backgroundMessageHandler(SmsMessage message) async {
 		Vibration.vibrate(duration: 500);
 	}
 ```
+### [Call State Management](https://shounakmulay.gitbook.io/telephony/call-state-management)
+:exclamation: Requires `READ_PHONE_STATE` permission.
+Add the following permission in your `AndroidManifest.xml`
+```xml
+<uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+```
+
+#### Listen to Call State Changes
+You can listen to call state changes including when calls become active, are put on hold, or are disconnected.
+
+```dart
+// Listen to call state changes in foreground
+telephony.listenCallStateChanges(
+    onCallStateChanged: (CallState state) {
+        switch (state) {
+            case CallState.Idle:
+                print('Phone is idle');
+                break;
+            case CallState.Ringing:
+                print('Phone is ringing');
+                break;
+            case CallState.Offhook:
+                print('Call is off hook');
+                break;
+            case CallState.Active:
+                print('Call is active');
+                break;
+            case CallState.Holding:
+                print('Call is on hold');
+                break;
+            case CallState.Disconnected:
+                print('Call disconnected');
+                break;
+            case CallState.Unknown:
+                print('Unknown call state');
+                break;
+        }
+    }
+);
+```
+
+#### Background Call State Listening
+Similar to SMS background listening, you can also listen to call state changes when your app is in the background.
+
+1. Create a **top-level static function** to handle call state changes when app is in background.
+
+```dart
+@pragma('vm:entry-point')
+backgroundCallStateHandler(CallState state) async {
+    // Handle background call state change
+    print('Background call state: $state');
+}
+
+void main() {
+    runApp(MyApp());
+}
+```
+
+2. Call `listenCallStateChanges` with background support:
+
+```dart
+telephony.listenCallStateChanges(
+    onCallStateChanged: (CallState state) {
+        // Handle foreground call state
+    },
+    onBackgroundCallStateChanged: backgroundCallStateHandler
+);
+```
+
+#### Get Current Call State
+```dart
+CallState currentState = await telephony.callState;
+```
+
+### [Dialer Functionality](https://shounakmulay.gitbook.io/telephony/dialer-functionality)
+:exclamation: Requires appropriate permissions for dialer operations.
+
+#### Default Dialer Management
+Check if your app is the default dialer or request to become the default dialer:
+
+```dart
+// Check if app is default dialer
+bool isDefault = await telephony.isDefaultDialer;
+
+// Request to become default dialer
+telephony.requestDefaultDialer();
+```
+
+#### Call Management
+When your app is the default dialer, you can manage active calls:
+
+```dart
+// Mute/unmute calls
+telephony.muteCall();
+telephony.unmuteCall();
+
+// Hold/unhold calls
+telephony.holdCall();
+telephony.unholdCall();
+
+// End calls
+telephony.endCall();
+
+// Send DTMF tones
+telephony.sendDtmf('1'); // Send digit '1'
+```
+
+#### Audio Management
+Control audio routing during calls:
+
+```dart
+// Set audio route to speaker
+telephony.setAudioRoute(AudioRoute.Speaker);
+
+// Set audio route to earpiece
+telephony.setAudioRoute(AudioRoute.Earpiece);
+
+// Set audio route to bluetooth
+telephony.setAudioRoute(AudioRoute.Bluetooth);
+```
+
+#### Get Call Information
+Retrieve information about current calls:
+
+```dart
+// Get current call info
+CallInfo? callInfo = await telephony.getCurrentCallInfo();
+if (callInfo != null) {
+    print('Caller: ${callInfo.callerDisplayName}');
+    print('Can hold: ${callInfo.canHold}');
+    print('Can mute: ${callInfo.canMute}');
+    print('Is video call: ${callInfo.isVideoCall}');
+}
+```
+
 ### [Network data and metrics](https://shounakmulay.gitbook.io/telephony/network-data-and-metrics)
 
 Fetch various metrics such as `network type`, `sim state`, etc.
@@ -312,6 +447,16 @@ class _MyAppState extends State<MyApp> {
  - [x] [Listen to incoming SMS](#listen-to-incoming-sms)
 	 - [x] When app is in foreground
 	 - [x] When app is in background
+ - [x] [Call State Management](#call-state-management)
+	 - [x] Listen to call state changes (Idle, Ringing, Offhook, Active, Holding, Disconnected, Unknown)
+	 - [x] Background call state listening
+	 - [x] Get current call state
+ - [x] [Dialer Functionality](#dialer-functionality)
+	 - [x] Default dialer management (check/request default dialer status)
+	 - [x] Call management (mute/unmute, hold/unhold, end call)
+	 - [x] Audio routing (speaker, earpiece, bluetooth)
+	 - [x] DTMF tone sending
+	 - [x] Call information retrieval
  - [x] [Network data and metrics](#network-data-and-metrics)
 	 - [x] Cellular data state
 	 - [x] Call state
