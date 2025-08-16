@@ -25,7 +25,7 @@ class TelephonyConnectionService : ConnectionService() {
             return null
         }
         
-        val connection = TelephonyConnection(this)
+        val connection = TelephonyConnection(this as Context)
         connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE or 
                                           Connection.CAPABILITY_HOLD or
                                           Connection.CAPABILITY_SUPPORT_HOLD)
@@ -50,7 +50,7 @@ class TelephonyConnectionService : ConnectionService() {
             return null
         }
         
-        val connection = TelephonyConnection(this)
+        val connection = TelephonyConnection(this as Context)
         connection.setConnectionCapabilities(Connection.CAPABILITY_MUTE or 
                                           Connection.CAPABILITY_HOLD or
                                           Connection.CAPABILITY_SUPPORT_HOLD)
@@ -84,4 +84,4 @@ class TelephonyConnectionService : ConnectionService() {
     ) {
         Log.d(TAG, "onConference: connection1=$connection1, connection2=$connection2")
     }
-} 
+}
